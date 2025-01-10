@@ -17,6 +17,10 @@ csharp_space_before_colon_in_inheritance_clause = true
 csharp_space_after_colon_in_inheritance_clause = true
 csharp_place_attribute_on_same_line = false
 
+[*.csproj]
+indent_style = space
+indent_size = 2
+
 [*.yml]
 indent_style = space
 indent_size = 2

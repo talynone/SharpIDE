@@ -35,4 +35,8 @@
 	  </None>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\SharpIDE.Application\SharpIDE.Application.csproj" />
+	</ItemGroup>
+
 </Project>

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Build.Locator;
+using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
 using Photino.Blazor;
 
@@ -21,6 +22,7 @@ public class Program
 		app.MainWindow
 			.SetSize(1400, 800)
 			.SetDevToolsEnabled(true)
+			.SetMaximized(true)
 			.SetLogVerbosity(0)
 			//.SetIconFile("favicon.ico")
 			.SetTitle("SharpIDE.Photino");
@@ -29,6 +31,9 @@ public class Program
 		{
 			app.MainWindow.ShowMessage("Fatal exception", error.ExceptionObject.ToString());
 		};
+
+		var instance = MSBuildLocator.QueryVisualStudioInstances().OrderByDescending(instance => instance.Version).First();
+		MSBuildLocator.RegisterInstance(instance);
 
 		app.Run();
 	}
