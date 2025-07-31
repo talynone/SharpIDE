@@ -25,10 +25,19 @@ public class BuildService
 			hostServices: null,
 			flags: BuildRequestDataFlags.None);
 
-		await Task.Run(() =>
+		await Task.Run(async () =>
 		{
+			var buildCompleteTcs = new TaskCompletionSource<BuildResult>();
+			BuildManager.DefaultBuildManager.BeginBuild(buildParameters);
+			var buildResult2 = BuildManager.DefaultBuildManager.PendBuildRequest(buildRequest);
 			var timer = Stopwatch.StartNew();
-			var buildResult = BuildManager.DefaultBuildManager.Build(buildParameters, buildRequest);
+			buildResult2.ExecuteAsync((BuildSubmission test) =>
+			{
+				buildCompleteTcs.SetResult(test.BuildResult!);
+				Console.WriteLine("Build submission completed.");
+			}, null);
+			//var buildResult = BuildManager.DefaultBuildManager.Build(buildParameters, buildRequest); // This is a convenience to essentially do the same thing.
+			var buildResult = await buildCompleteTcs.Task.ConfigureAwait(false);
 			timer.Stop();
 			Console.WriteLine($"Build result: {buildResult.OverallResult} in {timer.ElapsedMilliseconds}ms");
 		}).ConfigureAwait(false);
