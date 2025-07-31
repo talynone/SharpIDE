@@ -1,10 +1,11 @@
-﻿@using SharpIDE.Application.Features.SolutionDiscovery
+﻿@using Ardalis.GuardClauses
+@using SharpIDE.Application.Features.SolutionDiscovery
 @using SharpIDE.Photino.Services
 
 @inject RefreshOpenFileService RefreshOpenFileService
 
 <MudText>
-	@Path.GetFileName(FilePath)
+	@_internalSelectedFile?.Name
 	@if (_unsavedEdits)
 	{
 		<span>*</span>
@@ -15,36 +16,39 @@
 		height: calc(100vh - 100px);
 	}
 </style>
-<StandaloneCodeEditor @ref="_codeEditorRef" Id="my-editor-id" ConstructionOptions="@EditorConstructionOptions" OnDidChangeModelContent="IfDirtyMarkDirty" OnDidBlurEditorText="@SaveFileToDisk" />
+<div style="@(_internalSelectedFile is null ? "visibility: hidden" : null)">
+	<StandaloneCodeEditor @ref="_codeEditorRef" Id="my-editor-id" ConstructionOptions="@EditorConstructionOptions" OnDidChangeModelContent="IfDirtyMarkDirty" OnDidBlurEditorText="@SaveFileToDisk" />
+</div>
 
 @code {
 	[Parameter, EditorRequired]
-    public string FilePath { get; set; } = null!;
-
-	[Parameter, EditorRequired]
 	public SharpIdeFile? SelectedFile { get; set; }
+	private SharpIdeFile? _internalSelectedFile;
 
 	private string? _fileContent;
 	private bool _unsavedEdits = false;
 
 	StandaloneCodeEditor _codeEditorRef = null!;
 
-	private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
+	protected override async Task OnParametersSetAsync()
 	{
-		return new StandaloneEditorConstructionOptions
+		if (_internalSelectedFile is not null)
 		{
-			AutomaticLayout = true,
-			Language = "csharp",
-			Theme = "vs-dark",
-			ScrollBeyondLastLine = false,
-			FontSize = 18,
-			Value = _fileContent
-		};
+			await SaveFileToDisk();
+		}
+		if (SelectedFile is null) return;
+		_internalSelectedFile = SelectedFile;
+		var model = await _codeEditorRef.GetModel();
+		ArgumentNullException.ThrowIfNull(model);
+		await model.SetValue(string.Empty);
+		await ReadFile();
+		await model.SetValue(_fileContent);
+		_unsavedEdits = false;
+		StateHasChanged();
 	}
 
 	protected override async Task OnInitializedAsync()
 	{
-		await ReadFile();
 		RefreshOpenFileService.RefreshOpenFile += async () =>
 		{
 			Console.WriteLine("RefreshOpenFileService.RefreshOpenFile called");
@@ -58,25 +62,27 @@
 
 	private async Task ReadFile()
 	{
-		var fileInfo = new FileInfo(FilePath);
+		Guard.Against.Null(_internalSelectedFile);
+		var fileInfo = new FileInfo(_internalSelectedFile.Path);
 		if (!fileInfo.Exists)
 		{
-			throw new FileNotFoundException($"File not found: {FilePath}");
+			throw new FileNotFoundException($"File not found: {_internalSelectedFile.Path}");
 		}
-		var fileContent = await File.ReadAllTextAsync(FilePath);
+		var fileContent = await File.ReadAllTextAsync(_internalSelectedFile.Path);
 		_fileContent = fileContent;
 	}
 
-	private async Task SaveFileToDisk(object obj)
+	private async Task SaveFileToDisk()
 	{
+		Guard.Against.Null(_internalSelectedFile);
 		if (_unsavedEdits is false)
 		{
 			return;
 		}
-		var editor = obj as StandaloneCodeEditor;
-		ArgumentNullException.ThrowIfNull(editor, nameof(editor));
-		var editorTextValue = await editor.GetValue();
-		await File.WriteAllTextAsync(FilePath, editorTextValue);
+
+		ArgumentNullException.ThrowIfNull(_codeEditorRef, nameof(_codeEditorRef));
+		var editorTextValue = await _codeEditorRef.GetValue();
+		await File.WriteAllTextAsync(_internalSelectedFile.Path, editorTextValue);
 		_fileContent = editorTextValue;
 		_unsavedEdits = false;
 	}
@@ -92,5 +98,18 @@
 		{
 			_unsavedEdits = false;
 		}
+	}
+
+	private static StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
+	{
+		return new StandaloneEditorConstructionOptions
+		{
+			AutomaticLayout = true,
+			Language = "csharp",
+			Theme = "vs-dark",
+			ScrollBeyondLastLine = false,
+			FontSize = 18,
+			Value = string.Empty
+		};
 	}
 }
