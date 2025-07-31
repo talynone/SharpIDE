@@ -1,4 +1,6 @@
 ﻿@using SharpIDE.Application.Features.Build
+@using SharpIDE.Application.Features.SolutionDiscovery
+@using SharpIDE.Application.Features.SolutionDiscovery.VsPersistence
 @inherits LayoutComponentBase
 
 @inject IDialogService DialogService
@@ -11,7 +13,7 @@
 	<MudDrawer @bind-Open="@_drawerOpen" Width="400px" ClipMode="DrawerClipMode.Always">
 		@if (_solutionFilePath is not null)
 		{
-			<SolutionExplorer SolutionFilePath="@_solutionFilePath"/>
+			<SolutionExplorer SolutionModel="@_solutionModel" SolutionFilePath="@_solutionFilePath"/>
 		}
 		@* <NavMenu/> *@
 	</MudDrawer>
@@ -35,6 +37,7 @@
 	}
 
 	private string? _solutionFilePath;
+	private SharpIdeSolutionModel? _solutionModel;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -46,5 +49,7 @@
 		_solutionFilePath = solutionFilePath;
 
 		await BuildService.BuildSolutionAsync(_solutionFilePath);
+		var solutionModel = await RoslynTest.Analyse(_solutionFilePath);
+		_solutionModel = solutionModel;
 	}
 }

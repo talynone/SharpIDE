@@ -5,7 +5,8 @@
 	  "commandName": "Project",
 	  "dotnetRunMessages": true,
 	  "environmentVariables": {
-		  "DOTNET_ENVIRONMENT": "Development"
+		  "DOTNET_ENVIRONMENT": "Development",
+		  "MSBUILD_PARSE_SLN_WITH_SOLUTIONPERSISTENCE" : "true"
 	  }
   },
 	"(Watch)": {
@@ -15,7 +16,8 @@
 		"commandLineArgs": "watch run",
 		"environmentVariables": {
 			"DOTNET_ENVIRONMENT": "Development",
-			"DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true"
+			"DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true",
+			"MSBUILD_PARSE_SLN_WITH_SOLUTIONPERSISTENCE" : "true"
 			}
 		}
 	}

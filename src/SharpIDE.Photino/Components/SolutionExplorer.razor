@@ -1,6 +1,7 @@
 ﻿@using Ardalis.GuardClauses
 @using Microsoft.Build.Construction
 @using SharpIDE.Application.Features.SolutionDiscovery
+@using SharpIDE.Application.Features.SolutionDiscovery.VsPersistence
 
 @if (_solutionFile is null)
 {
@@ -18,6 +19,9 @@
 @code {
 	[Parameter, EditorRequired]
     public string SolutionFilePath { get; set; } = null!;
+
+	[Parameter, EditorRequired]
+	public SharpIdeSolutionModel SolutionModel { get; set; } = null!;
 
 	private SolutionFile _solutionFile = null!;
 	private List<ProjectInSolution> _rootNodes = [];
