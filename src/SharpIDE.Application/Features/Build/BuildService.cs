@@ -1,7 +1,9 @@
 using System.Diagnostics;
+using System.Threading.Channels;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Logging;
+using SharpIDE.Application.Features.Logging;
 
 namespace SharpIDE.Application.Features.Build;
 
@@ -14,6 +16,7 @@ public enum BuildType
 }
 public class BuildService
 {
+	public Channel<string> BuildOutputChannel { get; } = Channel.CreateUnbounded<string>();
 	public async Task MsBuildSolutionAsync(string solutionFilePath, BuildType buildType = BuildType.Build)
 	{
 		var buildParameters = new BuildParameters
@@ -21,7 +24,8 @@ public class BuildService
 			Loggers =
 			[
 				//new BinaryLogger { Parameters = "msbuild.binlog" },
-				new ConsoleLogger(LoggerVerbosity.Quiet),
+				new ConsoleLogger(LoggerVerbosity.Normal, message => BuildOutputChannel.Writer.TryWrite(message), s => { }, () => { }),
+				//new InMemoryLogger(LoggerVerbosity.Normal)
 			],
 		};
 		string[] targetsToBuild = buildType switch

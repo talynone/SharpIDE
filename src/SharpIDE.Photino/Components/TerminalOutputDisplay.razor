@@ -1,0 +1,21 @@
+﻿@using SharpIDE.Application.Features.Build
+@inject BuildService BuildService
+
+<div style="height: 15rem; overflow-y: auto; padding: 1rem; background-color: #303030; border: 1px solid #ccc;">
+	@foreach(var line in _outputLines)
+	{
+		<MudText Typo="Typo.body2">@line</MudText>
+	}
+</div>
+
+@code {
+	private List<string> _outputLines = [];
+	protected override async Task OnInitializedAsync()
+	{
+		await foreach (var logLine in BuildService.BuildOutputChannel.Reader.ReadAllAsync())
+		{
+			_outputLines.Add(logLine);
+			await InvokeAsync(StateHasChanged);
+		}
+	}
+}
