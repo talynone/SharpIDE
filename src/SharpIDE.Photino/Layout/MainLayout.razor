@@ -11,8 +11,9 @@
 		<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
 		<MudButtonGroup OverrideStyles="false">
 			<MudButton Variant="Variant.Filled" Size="Size.Small" Color="Color.Primary" OnClick="@BuildSolution">Build</MudButton>
-			<MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary">Rebuild</MudButton>
-			<MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary">Clean</MudButton>
+			<MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary" OnClick="@RebuildSolution">Rebuild</MudButton>
+			<MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary" OnClick="@CleanSolution">Clean</MudButton>
+			<MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary" OnClick="@RestoreSolution">Restore</MudButton>
 		</MudButtonGroup>
 	</MudAppBar>
 	<MudDrawer @bind-Open="@_drawerOpen" Width="400px" ClipMode="DrawerClipMode.Always">
@@ -59,8 +60,12 @@
 		_solutionModel = solutionModel;
 	}
 
-	private async Task BuildSolution()
+	private async Task BuildSolution() => await MsBuildSolution(BuildType.Build);
+	private async Task RebuildSolution() => await MsBuildSolution(BuildType.Rebuild);
+	private async Task CleanSolution() => await MsBuildSolution(BuildType.Clean);
+	private async Task RestoreSolution() => await MsBuildSolution(BuildType.Restore);
+	private async Task MsBuildSolution(BuildType buildType)
 	{
-		await BuildService.BuildSolutionAsync(_solutionFilePath!);
+		await BuildService.MsBuildSolutionAsync(_solutionFilePath!, buildType);
 	}
 }

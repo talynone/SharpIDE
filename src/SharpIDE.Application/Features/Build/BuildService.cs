@@ -5,9 +5,16 @@ using Microsoft.Build.Logging;
 
 namespace SharpIDE.Application.Features.Build;
 
+public enum BuildType
+{
+	Build,
+	Rebuild,
+	Clean,
+	Restore
+}
 public class BuildService
 {
-	public async Task BuildSolutionAsync(string solutionFilePath)
+	public async Task MsBuildSolutionAsync(string solutionFilePath, BuildType buildType = BuildType.Build)
 	{
 		var buildParameters = new BuildParameters
 		{
@@ -17,11 +24,19 @@ public class BuildService
 				new ConsoleLogger(LoggerVerbosity.Quiet),
 			],
 		};
+		string[] targetsToBuild = buildType switch
+		{
+			BuildType.Build => ["Restore", "Build"],
+			BuildType.Rebuild => ["Restore", "Rebuild"],
+			BuildType.Clean => ["Clean"],
+			BuildType.Restore => ["Restore"],
+			_ => throw new ArgumentOutOfRangeException(nameof(buildType), buildType, null)
+		};
 		var buildRequest = new BuildRequestData(
 			projectFullPath : solutionFilePath,
 			globalProperties: new Dictionary<string, string?>(),
 			toolsVersion: null,
-			targetsToBuild: ["Restore", "Build"],
+			targetsToBuild: targetsToBuild,
 			hostServices: null,
 			flags: BuildRequestDataFlags.None);
 
