@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using Microsoft.Build.Execution;
+using Microsoft.Build.Framework;
+using Microsoft.Build.Logging;
 using SharpIDE.Application.Features.Logging;
 
 namespace SharpIDE.Application.Features.Build;
@@ -25,7 +27,7 @@ public class BuildService
 			Loggers =
 			[
 				//new BinaryLogger { Parameters = "msbuild.binlog" },
-				//new ConsoleLogger(LoggerVerbosity.Minimal, message => BuildOutputChannel.Writer.TryWrite(message), s => { }, () => { }) {Parameters = "FORCECONSOLECOLOR"},
+				//new ConsoleLogger(LoggerVerbosity.Minimal) {Parameters = "FORCECONSOLECOLOR"},
 				terminalLogger
 				//new InMemoryLogger(LoggerVerbosity.Normal)
 			],
