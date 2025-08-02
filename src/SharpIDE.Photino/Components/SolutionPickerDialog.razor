@@ -24,6 +24,17 @@
 		_solutionFilePath = AppState.SolutionFilePath;
 	}
 
+	protected override void OnAfterRender(bool firstRender)
+	{
+		if (firstRender)
+		{
+			if (AppState.IdeSettings.AutoOpenLastSolution && !string.IsNullOrWhiteSpace(_solutionFilePath))
+			{
+				MudDialog.Close(_solutionFilePath);
+			}
+		}
+	}
+
 	private async Task PickSolution()
 	{
 		var files = await PhotinoBlazorApp.MainWindow.ShowOpenFileAsync("Choose Solution File", filters: [("Solution File", [".sln", ".slnx"])]);
