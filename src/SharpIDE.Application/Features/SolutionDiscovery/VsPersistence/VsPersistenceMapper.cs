@@ -32,7 +32,7 @@ public static class VsPersistenceMapper
 	private static SharpIdeProjectModel GetSharpIdeProjectModel(IntermediateProjectModel projectModel) => new SharpIdeProjectModel
 	{
 		Name = projectModel.Model.ActualDisplayName,
-		FilePath = projectModel.Model.FilePath,
+		FilePath = projectModel.FullFilePath,
 		Files = TreeMapperV2.GetFiles(projectModel.FullFilePath),
 		Folders = TreeMapperV2.GetSubFolders(projectModel.FullFilePath)
 
