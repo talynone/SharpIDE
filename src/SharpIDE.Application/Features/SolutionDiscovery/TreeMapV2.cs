@@ -18,6 +18,8 @@ public static class TreeMapperV2
 		var subFolders = rootFolder.GetSubFolders();
 		return subFolders;
 	}
+
+	private static readonly string[] _excludedFolders = ["bin", "obj", "node_modules"];
 	public static List<SharpIdeFolder> GetSubFolders(this SharpIdeFolder folder)
 	{
 		var directoryInfo = new DirectoryInfo(folder.Path);
@@ -30,7 +32,7 @@ public static class TreeMapperV2
 			{
 				IgnoreInaccessible = false,
 				AttributesToSkip = FileAttributes.ReparsePoint
-			}).ToList();
+			}).Where(s => _excludedFolders.Contains(s.Name, StringComparer.InvariantCultureIgnoreCase) is false).ToList();
 		}
 		catch (UnauthorizedAccessException)
 		{
