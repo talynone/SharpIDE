@@ -27,5 +27,9 @@ public class SharpIdeProjectModel : ISharpIdeNode
 	public required List<SharpIdeFolder> Folders { get; set; }
 	public required List<SharpIdeFile> Files { get; set; }
 	public bool Expanded { get; set; }
-	public required Task<Project> MsBuildEvaluationProject { get; set; }
+	public required Task<Project> MsBuildEvaluationProjectTask { get; set; }
+
+	public Project MsBuildEvaluationProject => MsBuildEvaluationProjectTask.IsCompletedSuccessfully
+		? MsBuildEvaluationProjectTask.Result
+		: throw new InvalidOperationException("Do not attempt to access the MsBuildEvaluationProject before it has been loaded");
 }

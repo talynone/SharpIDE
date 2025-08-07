@@ -7,9 +7,9 @@
 				<MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Medium" Color="Color.Default"/>
 			</MudButton>
 			<MudList T="string" Dense="true" Class="pa-0 ma-0">
-				@if (SolutionModel?.AllProjects?.Count is >= 0)
+				@if (_ready)
 				{
-					@foreach (var project in SolutionModel.AllProjects)
+					@foreach (var project in RunnableProjects)
 					{
 						<MudListItem T="string" Dense="true" Class="pa-0 ma-0 pl-2" Style="max-height: 36px;">
 							<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="pa-0 ma-0">
@@ -35,5 +35,16 @@
 	[Parameter, EditorRequired]
 	public SharpIdeSolutionModel SolutionModel { get; set; } = null!;
 
+	private IEnumerable<SharpIdeProjectModel> RunnableProjects => SolutionModel.AllProjects.Where(p => p.MsBuildEvaluationProject.GetPropertyValue("OutputType") is "Exe" or "WinExe");
+
 	private bool _open = false;
+	private bool _ready = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		var tasks = SolutionModel.AllProjects.Select(p => p.MsBuildEvaluationProjectTask).ToList();
+		await Task.WhenAll(tasks);
+		_ready = true;
+	}
+
 }

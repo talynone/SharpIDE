@@ -41,7 +41,7 @@ public static class VsPersistenceMapper
 			FilePath = projectModel.FullFilePath,
 			Files = TreeMapperV2.GetFiles(projectModel.FullFilePath),
 			Folders = TreeMapperV2.GetSubFolders(projectModel.FullFilePath),
-			MsBuildEvaluationProject = Test.GetProject(projectModel.FullFilePath)
+			MsBuildEvaluationProjectTask = Test.GetProject(projectModel.FullFilePath)
 		};
 		allProjects.Add(project);
 		return project;
