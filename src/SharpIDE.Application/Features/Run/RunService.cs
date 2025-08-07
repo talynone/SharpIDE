@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using Ardalis.GuardClauses;
 using AsyncReadProcess.Common;
 using AsyncReadProcess;
@@ -9,44 +10,53 @@ namespace SharpIDE.Application.Features.Run;
 
 public class RunService
 {
-	public HashSet<SharpIdeProjectModel> RunningProjects { get; } = [];
-	// TODO: optimise this Copilot junk
+	private readonly ConcurrentDictionary<SharpIdeProjectModel, SemaphoreSlim> _projectLocks = [];
 	public async Task RunProject(SharpIdeProjectModel project)
 	{
 		Guard.Against.Null(project, nameof(project));
 		Guard.Against.NullOrWhiteSpace(project.FilePath, nameof(project.FilePath), "Project file path cannot be null or empty.");
 		await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
 
-		var processStartInfo = new ProcessStartInfo2
+		var semaphoreSlim = _projectLocks.GetOrAdd(project, new SemaphoreSlim(1, 1));
+		var waitResult = await semaphoreSlim.WaitAsync(0);
+		if (waitResult is false) throw new InvalidOperationException($"Project {project.Name} is already running.");
+		try
 		{
-			FileName = "dotnet",
-			Arguments = $"run --project \"{project.FilePath}\" --no-build",
-			RedirectStandardOutput = true,
-			RedirectStandardError = true
-		};
-
-		await using var process = new AsyncReadProcess.Process2()
-		{
-			StartInfo = processStartInfo
-		};
-
-		process.Start();
-
-		_ = Task.Run(async () =>
-		{
-			await foreach(var log in process.CombinedOutputChannel.Reader.ReadAllAsync())
+			var processStartInfo = new ProcessStartInfo2
 			{
-				var logString = System.Text.Encoding.UTF8.GetString(log, 0, log.Length);
-				Console.Write(logString);
-			}
-		});
+				FileName = "dotnet",
+				Arguments = $"run --project \"{project.FilePath}\" --no-build",
+				RedirectStandardOutput = true,
+				RedirectStandardError = true
+			};
 
-		project.Running = true;
-		GlobalEvents.InvokeProjectsRunningChanged();
-		await process.WaitForExitAsync();
-		project.Running = false;
-		GlobalEvents.InvokeProjectsRunningChanged();
+			await using var process = new AsyncReadProcess.Process2()
+			{
+				StartInfo = processStartInfo
+			};
 
-		Console.WriteLine("Project ran successfully.");
+			process.Start();
+
+			_ = Task.Run(async () =>
+			{
+				await foreach(var log in process.CombinedOutputChannel.Reader.ReadAllAsync())
+				{
+					var logString = System.Text.Encoding.UTF8.GetString(log, 0, log.Length);
+					Console.Write(logString);
+				}
+			});
+
+			project.Running = true;
+			GlobalEvents.InvokeProjectsRunningChanged();
+			await process.WaitForExitAsync();
+			project.Running = false;
+			GlobalEvents.InvokeProjectsRunningChanged();
+
+			Console.WriteLine("Project ran successfully.");
+		}
+		finally
+		{
+			semaphoreSlim.Release();
+		}
 	}
 }
