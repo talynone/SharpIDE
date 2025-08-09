@@ -55,12 +55,17 @@
 	private bool _open = false;
 	private bool _ready = false;
 
-	protected override async Task OnInitializedAsync()
+	protected override void OnInitialized()
 	{
+		GlobalEvents.ProjectsRunningChanged += OnProjectsRunningChanged;
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		_ready = false;
 		var tasks = SolutionModel.AllProjects.Select(p => p.MsBuildEvaluationProjectTask).ToList();
 		await Task.WhenAll(tasks);
 		_ready = true;
-		GlobalEvents.ProjectsRunningChanged += OnProjectsRunningChanged;
 	}
 
 	private async Task OnProjectsRunningChanged()
