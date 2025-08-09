@@ -1,40 +1,13 @@
 ﻿@using SharpIDE.Application.Features.Build
-@using XtermBlazor
 
 @inject BuildService BuildService
 
 @implements IDisposable
-<style>
-	.xterm-underline-5.xterm-underline-5 { /* Specificity hack lol */
-		text-decoration: dotted underline;
-	}
-</style>
 
-<div style="width: 100%; height: 100%; overflow: auto">
-	<MudText>Terminal</MudText>
-	<Xterm @ref="@_terminalRef" Options="@_options" Style="height: calc(100% - 24px)" Addons="@_addons" OnFirstRender="@OnFirstRender"/>
-</div>
+<TerminalDisplay @ref="@_terminalDisplayRef"/>
 
 @code {
-	private Xterm _terminalRef;
-
-	private readonly TerminalOptions _options = new TerminalOptions
-	{
-		CursorBlink = true,
-		CursorStyle = CursorStyle.Bar,
-		Columns = 140,
-		FontFamily = "Cascadia Code",
-		FontWeightBold = "400",
-		Theme =
-		{
-			BrightGreen = "#98c379",
-			BrightRed = "#e06c75",
-			Foreground = "#dcdfe4",
-			Background = "#282c34",
-		},
-	};
-
-	private HashSet<string> _addons = ["addon-fit"];
+	private TerminalDisplay _terminalDisplayRef = null!;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -45,7 +18,7 @@
 			{
 				await foreach (var logLine in BuildService.BuildTextWriter.ConsoleChannel.Reader.ReadAllAsync())
 				{
-					await _terminalRef.Write(logLine);
+					await _terminalDisplayRef.Write(logLine);
 				}
 			}
 			catch (Exception e)
@@ -57,33 +30,9 @@
 
 	private async Task ClearPreviousOutput()
 	{
-		await _terminalRef.Clear();
+		await _terminalDisplayRef.Clear();
 		await InvokeAsync(StateHasChanged);
 	}
 
 	public void Dispose() => BuildService.BuildStarted -= ClearPreviousOutput;
-
-	private async Task OnFirstRender()
-	{
-		await _terminalRef.Addon("addon-fit").InvokeVoidAsync("fit");
-		_ = Task.Run(async () =>
-		{
-			try
-			{
-				while (true)
-				{
-					await Task.Delay(500).ConfigureAwait(false);
-					await InvokeAsync(async () =>
-					{
-						await _terminalRef.Addon("addon-fit").InvokeVoidAsync("fit");
-					});
-				}
-
-			}
-			catch (Exception e)
-			{
-				await DispatchExceptionAsync(e);
-			}
-		});
-	}
 }
