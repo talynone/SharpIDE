@@ -10,6 +10,9 @@
 	[Parameter, EditorRequired]
     public SharpIdeProjectModel Project { get; set; } = null!;
 
+	[Parameter]
+	public EventCallback<SharpIdeProjectModel> OnProjectStarted { get; set; }
+
 	private TerminalDisplay _terminalDisplayRef = null!;
 
 	protected override async Task OnInitializedAsync()
@@ -24,6 +27,7 @@
 		Guard.Against.Null(Project);
 		Guard.Against.Null(Project.RunningOutputChannel, nameof(Project.RunningOutputChannel));
 		if (_terminalDisplayRef is not null) await _terminalDisplayRef.Clear();
+		await InvokeAsync(async () => await OnProjectStarted.InvokeAsync(Project));
 		_ = Task.Run(async () =>
 		{
 			try

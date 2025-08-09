@@ -16,12 +16,12 @@
 		}
 	</style>
 	@* <MudText>Run</MudText> *@
-	<MudTabs Style="height: 100%" KeepPanelsAlive="true" PanelClass="panels-full-height" TabPanelClass="lowercase-tab-header">
+	<MudTabs @ref="_mudTabsRef" Style="height: 100%" KeepPanelsAlive="true" PanelClass="panels-full-height" TabPanelClass="lowercase-tab-header">
 		<ChildContent>
 			@foreach (var tab in OpenTabs)
 			{
 				<MudTabPanel Style="height: 100%" ID="@tab" Text="@tab.Name">
-					<RunOutputDisplay Project="@tab"/>
+					<RunOutputDisplay Project="@tab" OnProjectStarted="@SetActiveTab"/>
 				</MudTabPanel>
 			}
 		</ChildContent>
@@ -46,6 +46,8 @@
 	[Parameter, EditorRequired]
 	public SharpIdeSolutionModel SolutionModel { get; set; } = null!;
 
+	private MudTabs _mudTabsRef;
+
 	private IEnumerable<SharpIdeProjectModel> OpenTabs => SolutionModel.AllProjects.Where(s => s.OpenInRunPanel);
 
 	protected override async Task OnInitializedAsync()
@@ -66,4 +68,9 @@
 	}
 
 	public void Dispose() => GlobalEvents.ProjectsRunningChanged -= OnProjectsRunningChanged;
+
+	private void SetActiveTab(SharpIdeProjectModel project)
+	{
+		_mudTabsRef.ActivatePanel(project);
+	}
 }
