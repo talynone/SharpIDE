@@ -5,24 +5,25 @@ using Microsoft.CodeAnalysis.MSBuild;
 
 namespace SharpIDE.Application.Features.Analysis;
 
-public static class RoslynTest
+public static class RoslynAnalysis
 {
 	public static async Task Analyse(string solutionFilePath)
 	{
-		var workspace = MSBuildWorkspace.Create();
+		Console.WriteLine($"RoslynAnalysis: Loading solution");
 		var timer = Stopwatch.StartNew();
+		var workspace = MSBuildWorkspace.Create();
 		workspace.WorkspaceFailed += (o, e) => throw new InvalidOperationException($"Workspace failed: {e.Diagnostic.Message}");
 		var solution = await workspace.OpenSolutionAsync(solutionFilePath, new Progress());
 		timer.Stop();
-		Console.WriteLine($"RoslynTest: Solution loaded in {timer.ElapsedMilliseconds}ms");
+		Console.WriteLine($"RoslynAnalysis: Solution loaded in {timer.ElapsedMilliseconds}ms");
 		Console.WriteLine();
 
 		foreach (var project in solution.Projects)
 		{
-			Console.WriteLine($"Project: {project.Name}");
+			//Console.WriteLine($"Project: {project.Name}");
 			foreach (var document in project.Documents)
 			{
-				Console.WriteLine($"Document: {document.Name}");
+				//Console.WriteLine($"Document: {document.Name}");
 				// var compilation = await project.GetCompilationAsync();
 				// Guard.Against.Null(compilation, nameof(compilation));
 				//

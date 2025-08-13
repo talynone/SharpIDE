@@ -13,7 +13,7 @@ public static class ProjectEvaluation
 		await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
 
 		var project = _projectCollection.LoadProject(projectFilePath);
-		Console.WriteLine($"Project loaded: {project.FullPath}");
+		Console.WriteLine($"ProjectEvaluation: loaded {project.FullPath}");
 		//var outputType = project.GetProperty("OutputType");
 		return project;
 	}
