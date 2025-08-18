@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
+using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -162,6 +163,16 @@ public static class RoslynAnalysis
 		return result;
 	}
 
+	public static async Task<CompletionList> GetCodeCompletionsForDocumentAtPosition(SharpIdeFile fileModel, LinePosition linePosition)
+	{
+		await _solutionLoadedTcs.Task;
+		var project = _workspace!.CurrentSolution.Projects.Single(s => s.FilePath == ((IChildSharpIdeNode)fileModel).GetNearestProjectNode()!.FilePath);
+		var document = project.Documents.Single(s => s.FilePath == fileModel.Path);
+		Guard.Against.Null(document, nameof(document));
+		var completions = await GetCompletionsAsync(document, linePosition).ConfigureAwait(false);
+		return completions;
+	}
+
 	public static async Task<ImmutableArray<CodeAction>> GetCodeFixesForDocumentAtPosition(SharpIdeFile fileModel, LinePosition linePosition)
 	{
 		var cancellationToken = CancellationToken.None;
@@ -240,5 +251,22 @@ public static class RoslynAnalysis
 		}
 
 		return codeActions.ToImmutableArray();
+	}
+
+	private static async Task<CompletionList> GetCompletionsAsync(Document document, LinePosition linePosition)
+	{
+		var cancellationToken = CancellationToken.None;
+		var completionService = CompletionService.GetService(document);
+		if (completionService is null) throw new InvalidOperationException("Completion service is not available for the document.");
+
+		var sourceText = await document.GetTextAsync(cancellationToken);
+		var position = sourceText.Lines.GetPosition(linePosition);
+		var completions = await completionService.GetCompletionsAsync(document, position, cancellationToken: cancellationToken);
+
+		// foreach (var item in completions.ItemsList)
+		// {
+		// 	Console.WriteLine($"Completion: {item.DisplayText}");
+		// }
+		return completions;
 	}
 }

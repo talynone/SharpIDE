@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using Godot;
-using Microsoft.Build.Utilities;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.Text;
@@ -176,7 +175,32 @@ public partial class SharpIdeCodeEdit : CodeEdit
 	private void OnCodeCompletionRequested()
 	{
 		var (caretLine, caretColumn) = GetCaretPosition();
+		
 		GD.Print($"Code completion requested at line {caretLine}, column {caretColumn}");
+		_ = Task.Run(async () =>
+		{
+			try
+			{
+				var linePos = new LinePosition(caretLine, caretColumn);
+				
+				var completions = await RoslynAnalysis.GetCodeCompletionsForDocumentAtPosition(_currentFile, linePos);
+				Callable.From(() =>
+				{
+					foreach (var completionItem in completions.ItemsList)
+					{
+						AddCodeCompletionOption(CodeCompletionKind.Class, completionItem.DisplayText, completionItem.DisplayText);
+					}
+					// partially working - displays menu only when caret is what CodeEdit determines as valid
+					UpdateCodeCompletionOptions(true);
+					//RequestCodeCompletion(true);
+					GD.Print($"Found {completions.ItemsList.Count} completions, displaying menu");
+				}).CallDeferred();
+			}
+			catch (Exception ex)
+			{
+				GD.Print(ex);
+			}
+		});
 	}
 	
 	private (int, int) GetCaretPosition()
