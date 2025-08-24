@@ -94,7 +94,9 @@ public class SharpIdeProjectModel : ISharpIdeNode, IExpandableSharpIdeNode, IChi
 		? MsBuildEvaluationProjectTask.Result
 		: throw new InvalidOperationException("Do not attempt to access the MsBuildEvaluationProject before it has been loaded");
 
-	public bool IsRunnable => MsBuildEvaluationProject.Xml.Sdk is "Microsoft.NET.Sdk.BlazorWebAssembly" || MsBuildEvaluationProject.GetPropertyValue("OutputType") is "Exe" or "WinExe";
+	public bool IsRunnable => IsBlazorProject || MsBuildEvaluationProject.GetPropertyValue("OutputType") is "Exe" or "WinExe";
+	public bool IsBlazorProject => MsBuildEvaluationProject.Xml.Sdk is "Microsoft.NET.Sdk.BlazorWebAssembly";
+	public string BlazorDevServerVersion => MsBuildEvaluationProject.Items.Single(s => s.ItemType is "PackageReference" && s.EvaluatedInclude is "Microsoft.AspNetCore.Components.WebAssembly.DevServer").GetMetadataValue("Version");
 	public bool OpenInRunPanel { get; set; }
 	public Channel<byte[]>? RunningOutputChannel { get; set; }
 	public event Func<Task> ProjectStartedRunning = () => Task.CompletedTask;

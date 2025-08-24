@@ -25,7 +25,6 @@ public class RunService
 		if (project.RunningCancellationTokenSource is not null) throw new InvalidOperationException($"Project {project.Name} is already running with a cancellation token source.");
 
 		project.RunningCancellationTokenSource = new CancellationTokenSource();
-		var dllFullPath = ProjectEvaluation.GetOutputDllFullPath(project);
 		var launchProfiles = await LaunchSettingsParser.GetLaunchSettingsProfiles(project);
 		var launchProfile = launchProfiles.FirstOrDefault();
 		try
@@ -36,7 +35,7 @@ public class RunService
 				FileName = "dotnet",
 				WorkingDirectory = Path.GetDirectoryName(project.FilePath),
 				//Arguments = $"run --project \"{project.FilePath}\" --no-restore",
-				Arguments = $"\"{dllFullPath}\"",
+				Arguments = GetRunArguments(project),
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
 				EnvironmentVariables = []
@@ -119,5 +118,28 @@ public class RunService
 		if (project.RunningCancellationTokenSource is null) throw new InvalidOperationException($"Project {project.Name} does not have a running cancellation token source.");
 
 		await project.RunningCancellationTokenSource.CancelAsync().ConfigureAwait(false);
+	}
+
+	private string GetRunArguments(SharpIdeProjectModel project)
+	{
+		var dllFullPath = ProjectEvaluation.GetOutputDllFullPath(project);
+		if (project.IsBlazorProject)
+		{
+			var blazorDevServerVersion = project.BlazorDevServerVersion;
+			// TODO: Naive implementation which doesn't handle a relocated NuGet package cache
+			var blazorDevServerDllPath = Path.Combine(
+				Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+				".nuget",
+				"packages",
+				"microsoft.aspnetcore.components.webassembly.devserver",
+				blazorDevServerVersion,
+				"tools",
+				"blazor-devserver.dll");
+			var blazorDevServerFile = new FileInfo(blazorDevServerDllPath);
+			if (blazorDevServerFile.Exists is false) throw new FileNotFoundException($"Blazor dev server not found at expected path: {blazorDevServerDllPath}");
+			// C:/Users/Matthew/.nuget/packages/microsoft.aspnetcore.components.webassembly.devserver/9.0.7/tools/blazor-devserver.dll --applicationpath C:\Users\Matthew\Documents\Git\BlazorCodeBreaker\artifacts\bin\WebUi\debug\WebUi.dll
+			return $" \"{blazorDevServerFile.FullName}\" --applicationpath  \"{dllFullPath}\"";
+		}
+		return $"\"{dllFullPath}\"";
 	}
 }
