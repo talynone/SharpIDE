@@ -99,6 +99,10 @@ public class SharpIdeProjectModel : ISharpIdeNode, IExpandableSharpIdeNode, IChi
 	public string BlazorDevServerVersion => MsBuildEvaluationProject.Items.Single(s => s.ItemType is "PackageReference" && s.EvaluatedInclude is "Microsoft.AspNetCore.Components.WebAssembly.DevServer").GetMetadataValue("Version");
 	public bool OpenInRunPanel { get; set; }
 	public Channel<byte[]>? RunningOutputChannel { get; set; }
+
 	public event Func<Task> ProjectStartedRunning = () => Task.CompletedTask;
-	public void InvokeProjectStartedRunning() => ProjectStartedRunning?.Invoke();
+	public void InvokeProjectStartedRunning() => ProjectStartedRunning.Invoke();
+
+	public event Func<Task> ProjectStoppedRunning = () => Task.CompletedTask;
+	public void InvokeProjectStoppedRunning() => ProjectStoppedRunning.Invoke();
 }

@@ -19,6 +19,16 @@ public partial class RunMenuItem : HBoxContainer
         _stopButton = GetNode<Button>("StopButton");
         _stopButton.Pressed += OnStopButtonPressed;
         Project.ProjectStartedRunning += OnProjectStartedRunning;
+        Project.ProjectStoppedRunning += OnProjectStoppedRunning;
+    }
+
+    private async Task OnProjectStoppedRunning()
+    {
+        await this.InvokeAsync(() =>
+        {
+            _stopButton.Visible = false;
+            _runButton.Visible = true;
+        });
     }
 
     private async Task OnProjectStartedRunning()
@@ -33,8 +43,6 @@ public partial class RunMenuItem : HBoxContainer
     private async void OnStopButtonPressed()
     {
         await Singletons.RunService.CancelRunningProject(Project);
-        _stopButton.Visible = false;
-        _runButton.Visible = true;
     }
 
     private async void OnRunButtonPressed()
