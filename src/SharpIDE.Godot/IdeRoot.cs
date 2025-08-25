@@ -16,15 +16,24 @@ public partial class IdeRoot : Control
 	private SharpIdeCodeEdit _sharpIdeCodeEdit = null!;
 	private SolutionExplorerPanel _solutionExplorerPanel = null!;
 	private RunPanel _runPanel = null!;
-	private MenuButton _runMenuButton = null!;
+	private Button _runMenuButton = null!;
+	private Popup _runMenuPopup = null!;
+	
+	private readonly PackedScene _runMenuItemScene = ResourceLoader.Load<PackedScene>("res://Features/Run/RunMenuItem.tscn");
 	public override void _Ready()
 	{
 		MSBuildLocator.RegisterDefaults();
 		
 		_openSlnButton = GetNode<Button>("%OpenSlnButton");
-		_runMenuButton = GetNode<MenuButton>("%RunMenuButton");
-		var popup = _runMenuButton.GetPopup();
-		popup.HideOnItemSelection = false;
+		_runMenuPopup = GetNode<Popup>("%RunMenuPopup");
+		_runMenuButton = GetNode<Button>("%RunMenuButton");
+		_runMenuButton.Pressed += () =>
+		{
+			var popupMenuPosition = _runMenuButton.GlobalPosition;
+			const int buttonHeight = 44;
+			_runMenuPopup.Position = new Vector2I((int)popupMenuPosition.X, (int)popupMenuPosition.Y + buttonHeight);
+			_runMenuPopup.Popup();
+		};
 		
 		_sharpIdeCodeEdit = GetNode<SharpIdeCodeEdit>("%SharpIdeCodeEdit");
 		_fileDialog = GetNode<FileDialog>("%OpenSolutionDialog");
@@ -56,10 +65,12 @@ public partial class IdeRoot : Control
 				var runnableProjects = solutionModel.AllProjects.Where(p => p.IsRunnable).ToList();
 				await this.InvokeAsync(() =>
 				{
-					var popup = _runMenuButton.GetPopup();
+					var runMenuPopupVbox = _runMenuPopup.GetNode<VBoxContainer>("VBoxContainer");
 					foreach (var project in runnableProjects)
 					{
-						popup.AddItem(project.Name);
+						var runMenuItem = _runMenuItemScene.Instantiate<RunMenuItem>();
+						runMenuItem.Project = project;
+						runMenuPopupVbox.AddChild(runMenuItem);
 					}
 					_runMenuButton.Disabled = false;
 				});
