@@ -1,0 +1,57 @@
+[gd_scene load_steps=3 format=3 uid="uid://bdu08nd7si641"]
+
+[ext_resource type="Script" uid="uid://dpc4fvj40e5il" path="res://Features/Debug_/DebugPanelTab/SubTabs/ThreadsVariablesSubTab.cs" id="1_eohaj"]
+[ext_resource type="PackedScene" uid="uid://1bbofax8nht1" path="res://Features/Debug_/DebugPanelTab/SubTabs/ThreadListItem.tscn" id="1_ns3r7"]
+
+[node name="ThreadsVariablesSubTab" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_eohaj")
+
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+split_offset = 775
+
+[node name="HSplitContainer" type="HSplitContainer" parent="HSplitContainer"]
+layout_mode = 2
+split_offset = 370
+
+[node name="ThreadsPanel" type="Panel" parent="HSplitContainer/HSplitContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HSplitContainer/HSplitContainer/ThreadsPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ThreadListItem" parent="HSplitContainer/HSplitContainer/ThreadsPanel/VBoxContainer" instance=ExtResource("1_ns3r7")]
+layout_mode = 2
+
+[node name="StackFramesPanel" type="Panel" parent="HSplitContainer/HSplitContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HSplitContainer/HSplitContainer/StackFramesPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_right = 52.0
+offset_bottom = 23.0
+text = "B"
+
+[node name="VariablesPanel" type="Panel" parent="HSplitContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HSplitContainer/VariablesPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_right = 52.0
+offset_bottom = 23.0
+text = "C"

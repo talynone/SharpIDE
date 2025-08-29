@@ -3,7 +3,8 @@
 [ext_resource type="Script" uid="uid://b6gq81odfn8ok" path="res://Features/Debug_/DebugPanelTab/DebugPanelTab.cs" id="1_yinwn"]
 [ext_resource type="PackedScene" uid="uid://bdu08nd7si641" path="res://Features/Debug_/DebugPanelTab/SubTabs/ThreadsVariablesSubTab.tscn" id="2_0jpwf"]
 
-[node name="DebugPanelTab" type="Panel"]
+[node name="DebugPanelTab" type="Control"]
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

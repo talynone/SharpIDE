@@ -1,7 +1,7 @@
 using Godot;
 using SharpIDE.Application.Features.Events;
 using SharpIDE.Application.Features.SolutionDiscovery.VsPersistence;
-using SharpIDE.Godot.Features.Run;
+using SharpIDE.Godot.Features.Debug_.Tab;
 
 namespace SharpIDE.Godot.Features.Debug_;
 

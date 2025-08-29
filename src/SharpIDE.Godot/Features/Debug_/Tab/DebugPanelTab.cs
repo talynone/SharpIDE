@@ -2,9 +2,9 @@ using GDExtensionBindgen;
 using Godot;
 using SharpIDE.Application.Features.SolutionDiscovery.VsPersistence;
 
-namespace SharpIDE.Godot.Features.Debug_;
+namespace SharpIDE.Godot.Features.Debug_.Tab;
 
-public partial class DebugPanelTab : Panel
+public partial class DebugPanelTab : Control
 {
     private Terminal _terminal = null!;
     private Task _writeTask = Task.CompletedTask;
