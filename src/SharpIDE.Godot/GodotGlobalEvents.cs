@@ -1,4 +1,5 @@
 ﻿using SharpIDE.Application.Features.Events;
+using SharpIDE.Application.Features.SolutionDiscovery;
 
 namespace SharpIDE.Godot;
 
@@ -12,6 +13,9 @@ public static class GodotGlobalEvents
     
     public static event Func<bool, Task> BottomPanelVisibilityChangeRequested = _ => Task.CompletedTask;
     public static void InvokeBottomPanelVisibilityChangeRequested(bool show) => BottomPanelVisibilityChangeRequested.InvokeParallelFireAndForget(show);
+    
+    public static event Func<SharpIdeFile, Task> FileSelected = _ => Task.CompletedTask;
+    public static void InvokeFileSelected(SharpIdeFile file) => FileSelected.InvokeParallelFireAndForget(file);
 }
 
 public enum BottomPanelType

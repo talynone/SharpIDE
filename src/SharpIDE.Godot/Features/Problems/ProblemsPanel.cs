@@ -3,6 +3,7 @@ using Godot;
 using Microsoft.CodeAnalysis;
 using ObservableCollections;
 using R3;
+using SharpIDE.Application.Features.SolutionDiscovery;
 using SharpIDE.Application.Features.SolutionDiscovery.VsPersistence;
 
 namespace SharpIDE.Godot.Features.Problems;
@@ -26,6 +27,7 @@ public partial class ProblemsPanel : Control
     public override void _Ready()
     {
         _tree = GetNode<Tree>("%Tree");
+        _tree.ItemActivated += TreeOnItemActivated;
         _rootItem = _tree.CreateItem();
         _rootItem.SetText(0, "Problems");
         Observable.EveryValueChanged(this, manager => manager.Solution)
@@ -62,6 +64,7 @@ public partial class ProblemsPanel : Control
             var treeItem = tree.CreateItem(parent);
             treeItem.SetText(0, e.NewItem.Value.Name);
             treeItem.SetIcon(0, CsprojIcon);
+            treeItem.SetMetadata(0, new ProjectContainer(e.NewItem.Value));
             e.NewItem.View.Value = treeItem;
             
             Observable.EveryValueChanged(e.NewItem.Value, s => s.Diagnostics.Count).Subscribe(s => treeItem.Visible = s is not 0).AddTo(this);
@@ -83,6 +86,7 @@ public partial class ProblemsPanel : Control
         {
             var diagItem = tree.CreateItem(parent);
             diagItem.SetText(0, e.NewItem.Value.GetMessage());
+            diagItem.SetMetadata(0, new DiagnosticMetadataContainer(e.NewItem.Value));
             diagItem.SetIcon(0, e.NewItem.Value.Severity switch
             {
                 DiagnosticSeverity.Error => ErrorIcon,
@@ -99,5 +103,27 @@ public partial class ProblemsPanel : Control
         {
             treeItem?.Free();
         });
+    }
+    
+    private void TreeOnItemActivated()
+    {
+        var selected = _tree.GetSelected();
+        var diagnosticContainer = selected.GetMetadata(0).As<DiagnosticMetadataContainer?>();
+        if (diagnosticContainer is null) return;
+        var diagnostic = diagnosticContainer.Diagnostic;
+        var parentTreeItem = selected.GetParent();
+        var projectContainer = parentTreeItem.GetMetadata(0).As<ProjectContainer?>();
+        if (projectContainer is null) return;
+        var projectModel = projectContainer.Project;
+        OpenDocumentContainingDiagnostic(diagnostic, projectModel);
+    }
+    
+    private static void OpenDocumentContainingDiagnostic(Diagnostic diagnostic, SharpIdeProjectModel projectModel)
+    {
+        // TODO: probably store a flat list of all files in each project to avoid recursion
+        var file = projectModel.Files
+            .Concat(projectModel.Folders.SelectMany(f => f.GetAllFiles()))
+            .Single(s => s.Path == diagnostic.Location.SourceTree?.GetMappedLineSpan(diagnostic.Location.SourceSpan).Path);
+        GodotGlobalEvents.InvokeFileSelected(file);
     }
 }

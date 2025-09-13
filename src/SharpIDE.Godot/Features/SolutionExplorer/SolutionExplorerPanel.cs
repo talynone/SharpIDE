@@ -7,9 +7,6 @@ namespace SharpIDE.Godot.Features.SolutionExplorer;
 
 public partial class SolutionExplorerPanel : MarginContainer
 {
-	[Signal]
-	public delegate void FileSelectedEventHandler(SharpIdeFileGodotContainer file);
-	
 	[Export]
 	public Texture2D CsharpFileIcon { get; set; } = null!;
 	[Export]
@@ -37,7 +34,7 @@ public partial class SolutionExplorerPanel : MarginContainer
 		if (sharpIdeFileContainer is null) return;
 		var sharpIdeFile = sharpIdeFileContainer.File;
 		Guard.Against.Null(sharpIdeFile, nameof(sharpIdeFile));
-		EmitSignalFileSelected(sharpIdeFileContainer);
+		GodotGlobalEvents.InvokeFileSelected(sharpIdeFile);
 	}
 
 	public void RepopulateTree()

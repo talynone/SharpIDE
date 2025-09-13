@@ -1,6 +1,7 @@
 using Godot;
 using Microsoft.Build.Locator;
 using SharpIDE.Application.Features.Analysis;
+using SharpIDE.Application.Features.SolutionDiscovery;
 using SharpIDE.Application.Features.SolutionDiscovery.VsPersistence;
 using SharpIDE.Godot.Features.BottomPanel;
 using SharpIDE.Godot.Features.CustomControls;
@@ -39,7 +40,7 @@ public partial class IdeRoot : Control
 		_bottomPanelManager = GetNode<BottomPanelManager>("%BottomPanel");
 		
 		_runMenuButton.Pressed += OnRunMenuButtonPressed;
-		_solutionExplorerPanel.FileSelected += OnSolutionExplorerPanelOnFileSelected;
+		GodotGlobalEvents.FileSelected += OnSolutionExplorerPanelOnFileSelected;
 		_fileDialog.FileSelected += OnFileSelected;
 		_openSlnButton.Pressed += () => _fileDialog.Visible = true;
 		_buildSlnButton.Pressed += OnBuildSlnButtonPressed;
@@ -61,9 +62,9 @@ public partial class IdeRoot : Control
 		await Singletons.BuildService.MsBuildSolutionAsync(_solutionExplorerPanel.SolutionModel.FilePath);
 	}
 
-	private async void OnSolutionExplorerPanelOnFileSelected(SharpIdeFileGodotContainer file)
+	private async Task OnSolutionExplorerPanelOnFileSelected(SharpIdeFile file)
 	{
-		await _sharpIdeCodeEdit.SetSharpIdeFile(file.File);
+		await _sharpIdeCodeEdit.SetSharpIdeFile(file);
 	}
 
 	private void OnFileSelected(string path)
