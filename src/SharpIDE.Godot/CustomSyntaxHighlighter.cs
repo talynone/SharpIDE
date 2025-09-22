@@ -71,10 +71,10 @@ public partial class CustomHighlighter : SyntaxHighlighter
         return kind switch
         {
             SharpIdeRazorSpanKind.Code => GetColorForClassification(codeClassificationType!),
-            SharpIdeRazorSpanKind.Comment => CachedColors.Green, // green
-            SharpIdeRazorSpanKind.MetaCode => new Color("a699e6"), // purple
+            SharpIdeRazorSpanKind.Comment => CachedColors.CommentGreen, // green
+            SharpIdeRazorSpanKind.MetaCode => CachedColors.RazorMetaCodePurple, // purple
             SharpIdeRazorSpanKind.Markup => GetColorForMarkupSpanKind(vsSemanticRangeType),
-            SharpIdeRazorSpanKind.Transition => new Color("a699e6"), // purple
+            SharpIdeRazorSpanKind.Transition => CachedColors.RazorMetaCodePurple, // purple
             SharpIdeRazorSpanKind.None => CachedColors.White,
             _ => CachedColors.White
         };
@@ -84,14 +84,14 @@ public partial class CustomHighlighter : SyntaxHighlighter
     {
         return vsSemanticRangeType switch
         {
-            "razorDirective" or "razorTransition" => new Color("a699e6"), // purple
-            "markupTagDelimiter" => new Color("808080"), // gray
+            "razorDirective" or "razorTransition" => CachedColors.RazorMetaCodePurple, // purple
+            "markupTagDelimiter" => CachedColors.HtmlDelimiterGray, // gray
             "markupTextLiteral" => CachedColors.White, // white
-            "markupElement" => new Color("569cd6"), // blue
-            "razorComponentElement" => new Color("0b7f7f"), // dark green
+            "markupElement" => CachedColors.KeywordBlue, // blue
+            "razorComponentElement" => CachedColors.RazorComponentGreen, // dark green
             "razorComponentAttribute" => CachedColors.White, // white
-            "razorComment" or "razorCommentStar" or "razorCommentTransition" => CachedColors.Green, // green
-            "markupOperator" =>CachedColors.White, // white
+            "razorComment" or "razorCommentStar" or "razorCommentTransition" => CachedColors.CommentGreen, // green
+            "markupOperator" => CachedColors.White, // white
             "markupAttributeQuote" => CachedColors.White, // white
             _ => CachedColors.White // default to white
         };
@@ -136,34 +136,34 @@ public partial class CustomHighlighter : SyntaxHighlighter
         var colour = classificationType switch
         {
             // Keywords
-            "keyword" => new Color("569cd6"),
-            "keyword - control" => new Color("569cd6"),
-            "preprocessor keyword" => new Color("569cd6"),
+            "keyword" => CachedColors.KeywordBlue,
+            "keyword - control" => CachedColors.KeywordBlue,
+            "preprocessor keyword" => CachedColors.KeywordBlue,
 
             // Literals & comments
-            "string" => new Color("d69d85"),
-            "comment" => CachedColors.Green,
-            "number" => new Color("b5cea8"),
+            "string" => CachedColors.LightOrangeBrown,
+            "comment" => CachedColors.CommentGreen,
+            "number" => CachedColors.NumberGreen,
 
             // Types (User Types)
-            "class name" => new Color("4ec9b0"),
-            "record class name" => new Color("4ec9b0"),
-            "struct name" => new Color("4ec9b0"),
-            "interface name" => new Color("b8d7a3"),
-            "enum name" => new Color("b8d7a3"),
+            "class name" => CachedColors.ClassBlue,
+            "record class name" => CachedColors.ClassBlue,
+            "struct name" => CachedColors.ClassBlue,
+            "interface name" => CachedColors.InterfaceGreen,
+            "enum name" => CachedColors.InterfaceGreen,
             "namespace name" => CachedColors.White,
             
             // Identifiers & members
             "identifier" => CachedColors.White,
             "constant name" => CachedColors.White,
             "enum member name" => CachedColors.White,
-            "method name" => new Color("dcdcaa"),
-            "extension method name" => new Color("dcdcaa"),
+            "method name" => CachedColors.Yellow,
+            "extension method name" => CachedColors.Yellow,
             "property name" => CachedColors.White,
             "field name" => CachedColors.White,
-            "static symbol" => new Color("dcdcaa"),
-            "parameter name" => new Color("9cdcfe"),
-            "local name" => new Color("9cdcfe"),
+            "static symbol" => CachedColors.Yellow, // ??
+            "parameter name" => CachedColors.VariableBlue,
+            "local name" => CachedColors.VariableBlue,
 
             // Punctuation & operators
             "operator" => CachedColors.White,
@@ -171,18 +171,18 @@ public partial class CustomHighlighter : SyntaxHighlighter
             "punctuation" => CachedColors.White,
             
             // Xml comments
-            "xml doc comment - delimiter" => CachedColors.Green,
+            "xml doc comment - delimiter" => CachedColors.CommentGreen,
             "xml doc comment - name" => CachedColors.White,
-            "xml doc comment - text" => CachedColors.Green,
+            "xml doc comment - text" => CachedColors.CommentGreen,
 
             // Misc
-            "excluded code" => new Color("a9a9a9"),
+            "excluded code" => CachedColors.Gray,
 
             _ => CachedColors.Orange // orange, warning color for unhandled classifications
         };
         if (colour == CachedColors.Orange)
         {
-            GD.PrintErr($"Unhandled classification type: {classificationType}");
+            GD.PrintErr($"Unhandled classification type: '{classificationType}'");
         }
         return colour;
     }
@@ -193,5 +193,16 @@ file static class CachedColors
     public static readonly Color Orange = new("f27718");
     public static readonly Color White = new("dcdcdc");
     public static readonly Color Yellow = new("dcdcaa");
-    public static readonly Color Green = new("57a64a");
+    public static readonly Color CommentGreen = new("57a64a");
+    public static readonly Color KeywordBlue = new("569cd6");
+    public static readonly Color LightOrangeBrown = new("d69d85");
+    public static readonly Color NumberGreen = new("b5cea8");
+    public static readonly Color InterfaceGreen = new("b8d7a3");
+    public static readonly Color ClassBlue = new("4ec9b0");
+    public static readonly Color VariableBlue = new("9cdcfe");
+    public static readonly Color Gray = new("a9a9a9");
+    
+    public static readonly Color RazorComponentGreen = new("0b7f7f");
+    public static readonly Color RazorMetaCodePurple = new("a699e6");
+    public static readonly Color HtmlDelimiterGray = new("808080");
 }
