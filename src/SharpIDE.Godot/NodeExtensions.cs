@@ -34,6 +34,19 @@ public static class ControlExtensions
 
 public static class NodeExtensions
 {
+    extension(TreeItem treeItem)
+    {
+        public T? GetTypedMetadata<T>(int column) where T : RefCounted?
+        {
+            var metadata = treeItem.GetMetadata(column);
+            var refCountedMetadata = metadata.As<RefCounted?>();
+            if (refCountedMetadata is T correctTypeContainer)
+            {
+                return correctTypeContainer;
+            }
+            return null;
+        }
+    }
     extension(Node node)
     {
         public void QueueFreeChildren()

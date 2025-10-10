@@ -33,7 +33,7 @@ public partial class SolutionExplorerPanel : MarginContainer
 	{
 		var selected = _tree.GetSelected();
 		if (selected is null) return;
-		var sharpIdeFileContainer = selected.GetMetadata(0).As<RefCountedContainer<SharpIdeFile>?>();
+		var sharpIdeFileContainer = selected.GetTypedMetadata<RefCountedContainer<SharpIdeFile>?>(0);
 		if (sharpIdeFileContainer is null) return;
 		var sharpIdeFile = sharpIdeFileContainer.Item;
 		Guard.Against.Null(sharpIdeFile, nameof(sharpIdeFile));
@@ -97,8 +97,7 @@ public partial class SolutionExplorerPanel : MarginContainer
 	
 	private static TreeItem? FindItemRecursive(TreeItem item, SharpIdeFile file)
 	{
-		var metadata = item.GetMetadata(0);
-		if (metadata.As<RefCountedContainer<SharpIdeFile>?>()?.Item == file)
+		if (item.GetTypedMetadata<RefCountedContainer<SharpIdeFile>?>(0)?.Item == file)
 			return item;
 
 		var child = item.GetFirstChild();
@@ -142,6 +141,8 @@ public partial class SolutionExplorerPanel : MarginContainer
 		var folderItem = _tree.CreateItem(parent);
 		folderItem.SetText(0, folder.Name);
 		folderItem.SetIcon(0, SlnFolderIcon);
+		var container = new RefCountedContainer<SharpIdeSolutionFolder>(folder);
+		folderItem.SetMetadata(0, container);
 
 		foreach (var project in folder.Projects)
 		{
@@ -164,6 +165,8 @@ public partial class SolutionExplorerPanel : MarginContainer
 		var projectItem = _tree.CreateItem(parent);
 		projectItem.SetText(0, project.Name);
 		projectItem.SetIcon(0, CsprojIcon);
+		var container = new RefCountedContainer<SharpIdeProjectModel>(project);
+		projectItem.SetMetadata(0, container);
 
 		foreach (var sharpIdeFolder in project.Folders)
 		{
@@ -181,6 +184,8 @@ public partial class SolutionExplorerPanel : MarginContainer
 		var folderItem = _tree.CreateItem(projectItem);
 		folderItem.SetText(0, sharpIdeFolder.Name);
 		folderItem.SetIcon(0, FolderIcon);
+		var container = new RefCountedContainer<SharpIdeFolder>(sharpIdeFolder);
+		folderItem.SetMetadata(0, container);
 
 		foreach (var subFolder in sharpIdeFolder.Folders)
 		{
