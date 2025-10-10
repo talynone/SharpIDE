@@ -88,22 +88,22 @@ public partial class IdeRoot : Control
 	private async void OnBuildSlnButtonPressed()
 	{
 		GodotGlobalEvents.Instance.BottomPanelTabExternallySelected.InvokeParallelFireAndForget(BottomPanelType.Build);
-		await Singletons.BuildService.MsBuildSolutionAsync(_solutionExplorerPanel.SolutionModel.FilePath);
+		await Singletons.BuildService.MsBuildAsync(_solutionExplorerPanel.SolutionModel.FilePath);
 	}
 	private async void OnRebuildSlnButtonPressed()
 	{
 		GodotGlobalEvents.Instance.BottomPanelTabExternallySelected.InvokeParallelFireAndForget(BottomPanelType.Build);
-		await Singletons.BuildService.MsBuildSolutionAsync(_solutionExplorerPanel.SolutionModel.FilePath, BuildType.Rebuild);
+		await Singletons.BuildService.MsBuildAsync(_solutionExplorerPanel.SolutionModel.FilePath, BuildType.Rebuild);
 	}
 	private async void OnCleanSlnButtonPressed()
 	{
 		GodotGlobalEvents.Instance.BottomPanelTabExternallySelected.InvokeParallelFireAndForget(BottomPanelType.Build);
-		await Singletons.BuildService.MsBuildSolutionAsync(_solutionExplorerPanel.SolutionModel.FilePath, BuildType.Clean);
+		await Singletons.BuildService.MsBuildAsync(_solutionExplorerPanel.SolutionModel.FilePath, BuildType.Clean);
 	}
 	private async void OnRestoreSlnButtonPressed()
 	{
 		GodotGlobalEvents.Instance.BottomPanelTabExternallySelected.InvokeParallelFireAndForget(BottomPanelType.Build);
-		await Singletons.BuildService.MsBuildSolutionAsync(_solutionExplorerPanel.SolutionModel.FilePath, BuildType.Restore);
+		await Singletons.BuildService.MsBuildAsync(_solutionExplorerPanel.SolutionModel.FilePath, BuildType.Restore);
 	}
 
 	private async Task OnSolutionExplorerPanelOnFileSelected(SharpIdeFile file, SharpIdeFileLinePosition? fileLinePosition)

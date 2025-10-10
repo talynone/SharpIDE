@@ -1,5 +1,8 @@
 ﻿using Godot;
+using SharpIDE.Application.Features.Build;
+using SharpIDE.Application.Features.Events;
 using SharpIDE.Application.Features.SolutionDiscovery.VsPersistence;
+using SharpIDE.Godot.Features.BottomPanel;
 
 namespace SharpIDE.Godot.Features.SolutionExplorer;
 
@@ -36,24 +39,29 @@ public partial class SolutionExplorerPanel
             }
             if (actionId is ProjectContextMenuOptions.Build)
             {
-                
+                _ = Task.GodotRun(async () => await MsBuildProject(project, BuildType.Build));
             }
             else if (actionId is ProjectContextMenuOptions.Rebuild)
             {
-                
+                _ = Task.GodotRun(async () => await MsBuildProject(project, BuildType.Rebuild));
             }
             else if (actionId is ProjectContextMenuOptions.Clean)
             {
-                
+                _ = Task.GodotRun(async () => await MsBuildProject(project, BuildType.Clean));
             }
             else if (actionId is ProjectContextMenuOptions.Restore)
             {
-                
+                _ = Task.GodotRun(async () => await MsBuildProject(project, BuildType.Restore));
             }
         };
 			
         var globalMousePosition = GetGlobalMousePosition();
         menu.Position = new Vector2I((int)globalMousePosition.X, (int)globalMousePosition.Y);
         menu.Popup();
+    }
+    private static async Task MsBuildProject(SharpIdeProjectModel project, BuildType buildType)
+    {
+        GodotGlobalEvents.Instance.BottomPanelTabExternallySelected.InvokeParallelFireAndForget(BottomPanelType.Build);
+        await Singletons.BuildService.MsBuildAsync(project.FilePath, buildType);
     }
 }

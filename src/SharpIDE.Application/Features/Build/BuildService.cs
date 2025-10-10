@@ -18,7 +18,7 @@ public class BuildService
 {
 	public event Func<Task> BuildStarted = () => Task.CompletedTask;
 	public ChannelTextWriter BuildTextWriter { get; } = new ChannelTextWriter();
-	public async Task MsBuildSolutionAsync(string solutionFilePath, BuildType buildType = BuildType.Build, CancellationToken cancellationToken = default)
+	public async Task MsBuildAsync(string solutionOrProjectFilePath, BuildType buildType = BuildType.Build, CancellationToken cancellationToken = default)
 	{
 		var normalOut = Console.Out;
 		Console.SetOut(BuildTextWriter);
@@ -41,7 +41,7 @@ public class BuildService
 
 		var targetsToBuild = TargetsToBuild(buildType);
 		var buildRequest = new BuildRequestData(
-			projectFullPath : solutionFilePath,
+			projectFullPath : solutionOrProjectFilePath,
 			globalProperties: new Dictionary<string, string?>(),
 			toolsVersion: null,
 			targetsToBuild: targetsToBuild,
