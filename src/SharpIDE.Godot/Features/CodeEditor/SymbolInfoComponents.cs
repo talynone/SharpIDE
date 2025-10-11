@@ -220,6 +220,7 @@ public static class SymbolInfoComponents
     {
         if (methodSymbol.ContainingNamespace is null || methodSymbol.ContainingNamespace.IsGlobalNamespace) return;
         var namespaces = methodSymbol.ContainingNamespace.ToDisplayString().Split('.');
+        label.PushMeta("TODO", RichTextLabel.MetaUnderline.OnHover);
         foreach (var ns in namespaces)
         {
             label.PushColor(CachedColors.KeywordBlue);
@@ -230,6 +231,7 @@ public static class SymbolInfoComponents
         label.PushColor(CachedColors.ClassGreen);
         label.AddText(methodSymbol.ContainingType.Name);
         label.Pop();
+        label.Pop(); // meta
     }
     
     private static void AddTypeParameterArguments(this RichTextLabel label, IMethodSymbol methodSymbol)
