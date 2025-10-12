@@ -88,16 +88,40 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		SetSymbolLookupWordAsValid(true);
 	}
 
+	// This method is a bit of a disaster - we create an additional invisible Window, so that the tooltip window doesn't disappear while the mouse is over the hovered symbol
 	private async void OnSymbolHovered(string symbol, long line, long column)
 	{
 		if (HasFocus() is false) return; // only show if we have focus, every tab is currently listening for this event, maybe find a better way
+		var globalMousePosition = GetGlobalMousePosition(); // don't breakpoint before this, else your mouse position will be wrong
+		var lineHeight = GetLineHeight();
 		GD.Print($"Symbol hovered: {symbol} at line {line}, column {column}");
 		
-		var roslynSymbol = await RoslynAnalysis.LookupSymbol(_currentFile, new LinePosition((int)line, (int)column));
-		if (roslynSymbol is null)
+		var (roslynSymbol, linePositionSpan) = await RoslynAnalysis.LookupSymbol(_currentFile, new LinePosition((int)line, (int)column));
+		if (roslynSymbol is null || linePositionSpan is null)
 		{
 			return;
 		}
+
+		var symbolNameHoverWindow = new Window();
+		symbolNameHoverWindow.WrapControls = true;
+		symbolNameHoverWindow.Unresizable = true;
+		symbolNameHoverWindow.Transparent = true;
+		symbolNameHoverWindow.Borderless = true;
+		symbolNameHoverWindow.PopupWMHint = true;
+		symbolNameHoverWindow.MinimizeDisabled = true;
+		symbolNameHoverWindow.MaximizeDisabled = true;
+		
+		var startSymbolCharRect = GetRectAtLineColumn(linePositionSpan.Value.Start.Line, linePositionSpan.Value.Start.Character + 1);
+		var endSymbolCharRect = GetRectAtLineColumn(linePositionSpan.Value.End.Line, linePositionSpan.Value.End.Character + 1);
+		symbolNameHoverWindow.Size = new Vector2I(endSymbolCharRect.End.X - startSymbolCharRect.Position.X, lineHeight);
+		
+		var globalPosition = GetGlobalPosition();
+		var startSymbolCharGlobalPos = startSymbolCharRect.Position + globalPosition;
+		var endSymbolCharGlobalPos = endSymbolCharRect.Position + globalPosition;
+		
+		AddChild(symbolNameHoverWindow);
+		symbolNameHoverWindow.Position = new Vector2I((int)startSymbolCharGlobalPos.X, (int)endSymbolCharGlobalPos.Y);
+		symbolNameHoverWindow.Popup();
 		
 		var tooltipWindow = new Window();
 		tooltipWindow.WrapControls = true;
@@ -108,12 +132,18 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		tooltipWindow.MinimizeDisabled = true;
 		tooltipWindow.MaximizeDisabled = true;
 		
-		var timer = new Timer { WaitTime = 0.5f, OneShot = true, Autostart = false };
+		var timer = new Timer { WaitTime = 0.05f, OneShot = true, Autostart = false };
 		tooltipWindow.AddChild(timer);
-		timer.Timeout += () => tooltipWindow.QueueFree();
+		timer.Timeout += () =>
+		{
+			tooltipWindow.QueueFree();
+			symbolNameHoverWindow.QueueFree();
+		};
 	
 		tooltipWindow.MouseExited += () => timer.Start();
 		tooltipWindow.MouseEntered += () => timer.Stop();
+		symbolNameHoverWindow.MouseExited += () => timer.Start();
+		symbolNameHoverWindow.MouseEntered += () => timer.Stop();
 		
 		var styleBox = new StyleBoxFlat
 		{
@@ -154,17 +184,12 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		panel.AddChild(symbolInfoNode);
 		var vboxContainer = new VBoxContainer();
 		vboxContainer.AddThemeConstantOverride("separation", 0);
-		vboxContainer.AddChild(new Control { CustomMinimumSize = new Vector2I(0, GetLineHeight()) });
 		vboxContainer.AddChild(panel);
 		tooltipWindow.AddChild(vboxContainer);
 		tooltipWindow.ChildControlsChanged();
 		AddChild(tooltipWindow);
 		
-		var globalSymbolPosition = GetRectAtLineColumn((int)line, (int)column).Position + GetGlobalPosition();
-		
-		var globalMousePosition = GetGlobalMousePosition();
-		// -1 so that the mouse is inside the popup, otherwise the mouse exit event won't occur if the cursor moves away immediately
-		tooltipWindow.Position = new Vector2I((int)globalMousePosition.X - 1, (int)globalSymbolPosition.Y);
+		tooltipWindow.Position = new Vector2I((int)globalMousePosition.X, (int)startSymbolCharGlobalPos.Y + lineHeight);
 		tooltipWindow.Popup();
 	}
 

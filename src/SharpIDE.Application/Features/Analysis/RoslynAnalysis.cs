@@ -14,6 +14,7 @@ using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Razor.SemanticTokens;
 using Microsoft.CodeAnalysis.Remote.Razor.ProjectSystem;
 using Microsoft.CodeAnalysis.Remote.Razor.SemanticTokens;
+using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Shared.Utilities;
 using Microsoft.CodeAnalysis.Text;
 using SharpIDE.Application.Features.Analysis.FixLoaders;
@@ -476,14 +477,14 @@ public static class RoslynAnalysis
 		return changedFilesWithText;
 	}
 
-	public static async Task<ISymbol?> LookupSymbol(SharpIdeFile fileModel, LinePosition linePosition)
+	public static async Task<(ISymbol?, LinePositionSpan?)> LookupSymbol(SharpIdeFile fileModel, LinePosition linePosition)
 	{
 		await _solutionLoadedTcs.Task;
-		var symbol = fileModel.IsRazorFile ? await LookupSymbolInRazor(fileModel, linePosition) : await LookupSymbolInCs(fileModel, linePosition);
-		return symbol;
+		var (symbol, linePositionSpan) = fileModel.IsRazorFile ? await LookupSymbolInRazor(fileModel, linePosition) : await LookupSymbolInCs(fileModel, linePosition);
+		return (symbol, linePositionSpan);
 	}
 
-	private static async Task<ISymbol?> LookupSymbolInRazor(SharpIdeFile fileModel, LinePosition linePosition, CancellationToken cancellationToken = default)
+	private static async Task<(ISymbol? symbol, LinePositionSpan? linePositionSpan)> LookupSymbolInRazor(SharpIdeFile fileModel, LinePosition linePosition, CancellationToken cancellationToken = default)
 	{
 		var sharpIdeProjectModel = ((IChildSharpIdeNode) fileModel).GetNearestProjectNode()!;
 		var project = _workspace!.CurrentSolution.Projects.Single(s => s.FilePath == sharpIdeProjectModel!.FilePath);
@@ -502,11 +503,11 @@ public static class RoslynAnalysis
 
 		var mappedPosition = MapRazorLinePositionToGeneratedCSharpAbsolutePosition(razorCSharpDocument, razorText, linePosition);
 		var semanticModelAsync = await generatedDocument.GetSemanticModelAsync(cancellationToken);
-		var symbol = GetSymbolAtPosition(semanticModelAsync!, generatedDocSyntaxRoot!, mappedPosition!.Value);
-		return symbol;
+		var (symbol, linePositionSpan) = GetSymbolAtPosition(semanticModelAsync!, generatedDocSyntaxRoot!, mappedPosition!.Value);
+		return (symbol, linePositionSpan);
 	}
 
-	private static async Task<ISymbol?> LookupSymbolInCs(SharpIdeFile fileModel, LinePosition linePosition)
+	private static async Task<(ISymbol? symbol, LinePositionSpan? linePositionSpan)> LookupSymbolInCs(SharpIdeFile fileModel, LinePosition linePosition)
 	{
 		var project = _workspace!.CurrentSolution.Projects.Single(s => s.FilePath == ((IChildSharpIdeNode)fileModel).GetNearestProjectNode()!.FilePath);
 		var document = project.Documents.Single(s => s.FilePath == fileModel.Path);
@@ -519,18 +520,19 @@ public static class RoslynAnalysis
 		return GetSymbolAtPosition(semanticModel, syntaxRoot!, position);
 	}
 
-	private static ISymbol? GetSymbolAtPosition(SemanticModel semanticModel, SyntaxNode root, int position)
+	private static (ISymbol? symbol, LinePositionSpan? linePositionSpan) GetSymbolAtPosition(SemanticModel semanticModel, SyntaxNode root, int position)
 	{
 		var node = root.FindToken(position).Parent!;
 		var symbol = semanticModel.GetSymbolInfo(node).Symbol ?? semanticModel.GetDeclaredSymbol(node);
 		if (symbol is null)
 		{
 			Console.WriteLine("No symbol found at position");
-			return null;
+			return (null, null);
 		}
 
+		var linePositionSpan = root.SyntaxTree.GetLineSpan(node.Span).Span;
 		Console.WriteLine($"Symbol found: {symbol.Name} ({symbol.Kind}) - {symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}");
-		return symbol;
+		return (symbol, linePositionSpan);
 	}
 
 	private static int? MapRazorLinePositionToGeneratedCSharpAbsolutePosition(RazorCSharpDocument razorCSharpDocument, SourceText razorText, LinePosition razorLinePosition)
