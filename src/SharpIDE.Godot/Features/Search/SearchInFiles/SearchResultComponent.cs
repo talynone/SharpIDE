@@ -12,7 +12,7 @@ public partial class SearchResultComponent : MarginContainer
     private Button _button = null!;
     
     public SearchWindow ParentSearchWindow { get; set; } = null!;
-    public SearchResult Result { get; set; } = null!;
+    public FindInFilesSearchResult Result { get; set; } = null!;
     
     public override void _Ready()
     {
@@ -31,7 +31,7 @@ public partial class SearchResultComponent : MarginContainer
         ParentSearchWindow.Hide();
     }
 
-    private void SetValue(SearchResult result)
+    private void SetValue(FindInFilesSearchResult result)
     {
         if (result is null) return;
         _matchingLineLabel.Text = result.LineText;

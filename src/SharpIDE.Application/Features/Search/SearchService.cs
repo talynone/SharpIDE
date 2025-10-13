@@ -7,16 +7,16 @@ namespace SharpIDE.Application.Features.Search;
 
 public static class SearchService
 {
-	public static async Task<List<SearchResult>> FindInFiles(SharpIdeSolutionModel solutionModel, string searchTerm, CancellationToken cancellationToken)
+	public static async Task<List<FindInFilesSearchResult>> FindInFiles(SharpIdeSolutionModel solutionModel, string searchTerm, CancellationToken cancellationToken)
 	{
-		if (searchTerm.Length < 4)
+		if (searchTerm.Length < 4) // TODO: halt search once 100 results are found, and remove this restriction
 		{
 			return [];
 		}
 
 		var timer = Stopwatch.StartNew();
 		var files = solutionModel.AllFiles;
-		ConcurrentBag<SearchResult> results = [];
+		ConcurrentBag<FindInFilesSearchResult> results = [];
 		await Parallel.ForEachAsync(files, cancellationToken, async (file, ct) =>
 			{
 				if (cancellationToken.IsCancellationRequested) return;
@@ -25,7 +25,7 @@ public static class SearchService
 					if (cancellationToken.IsCancellationRequested) return;
 					if (line.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
 					{
-						results.Add(new SearchResult
+						results.Add(new FindInFilesSearchResult
 						{
 							File = file,
 							Line = index + 1,
@@ -38,6 +38,33 @@ public static class SearchService
 		).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 		timer.Stop();
 		Console.WriteLine($"Search completed in {timer.ElapsedMilliseconds} ms. Found {results.Count} results. {(cancellationToken.IsCancellationRequested ? "(Cancelled)" : "")}");
+		return results.ToList();
+	}
+
+	public static async Task<List<FindFilesSearchResult>> FindFiles(SharpIdeSolutionModel solutionModel, string searchTerm, CancellationToken cancellationToken)
+	{
+		if (searchTerm.Length < 2) // TODO: halt search once 100 results are found, and remove this restriction
+		{
+			return [];
+		}
+
+		var timer = Stopwatch.StartNew();
+		var files = solutionModel.AllFiles;
+		ConcurrentBag<FindFilesSearchResult> results = [];
+		await Parallel.ForEachAsync(files, cancellationToken, async (file, ct) =>
+			{
+				if (cancellationToken.IsCancellationRequested) return;
+				if (file.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+				{
+					results.Add(new FindFilesSearchResult
+					{
+						File = file
+					});
+				}
+			}
+		).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+		timer.Stop();
+		Console.WriteLine($"File search completed in {timer.ElapsedMilliseconds} ms. Found {results.Count} results. {(cancellationToken.IsCancellationRequested ? "(Cancelled)" : "")}");
 		return results.ToList();
 	}
 }

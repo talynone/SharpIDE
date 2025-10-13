@@ -14,6 +14,7 @@ using SharpIDE.Godot.Features.CodeEditor;
 using SharpIDE.Godot.Features.CustomControls;
 using SharpIDE.Godot.Features.Run;
 using SharpIDE.Godot.Features.Search;
+using SharpIDE.Godot.Features.Search.SearchAllFiles;
 using SharpIDE.Godot.Features.SolutionExplorer;
 
 namespace SharpIDE.Godot;
@@ -27,6 +28,7 @@ public partial class IdeRoot : Control
 	private Button _cleanSlnButton = null!;
 	private Button _restoreSlnButton = null!;
 	private SearchWindow _searchWindow = null!;
+	private SearchAllFilesWindow _searchAllFilesWindow = null!;
 	private CodeEditorPanel _codeEditorPanel = null!;
 	private SolutionExplorerPanel _solutionExplorerPanel = null!;
 	private InvertedVSplitContainer _invertedVSplitContainer = null!;
@@ -61,6 +63,7 @@ public partial class IdeRoot : Control
 		_runMenuButton = GetNode<Button>("%RunMenuButton");
 		_codeEditorPanel = GetNode<CodeEditorPanel>("%CodeEditorPanel");
 		_searchWindow = GetNode<SearchWindow>("%SearchWindow");
+		_searchAllFilesWindow = GetNode<SearchAllFilesWindow>("%SearchAllFilesWindow");
 		_solutionExplorerPanel = GetNode<SolutionExplorerPanel>("%SolutionExplorerPanel");
 		_runPanel = GetNode<RunPanel>("%RunPanel");
 		_invertedVSplitContainer = GetNode<InvertedVSplitContainer>("%InvertedVSplitContainer");
@@ -122,6 +125,7 @@ public partial class IdeRoot : Control
 			_codeEditorPanel.Solution = solutionModel;
 			_bottomPanelManager.Solution = solutionModel;
 			_searchWindow.Solution = solutionModel;
+			_searchAllFilesWindow.Solution = solutionModel;
 			Singletons.FileChangeHandler.SolutionModel = solutionModel;
 			Callable.From(_solutionExplorerPanel.RepopulateTree).CallDeferred();
 			RoslynAnalysis.StartSolutionAnalysis(solutionModel);
@@ -153,6 +157,10 @@ public partial class IdeRoot : Control
 		if (@event.IsActionPressed(InputStringNames.FindInFiles))
 		{
 			_searchWindow.Popup();
+		}
+		else if (@event.IsActionPressed(InputStringNames.FindFiles))
+		{
+			_searchAllFilesWindow.Popup();
 		}
 	}
 }

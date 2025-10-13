@@ -2,7 +2,7 @@
 
 namespace SharpIDE.Application.Features.Search;
 
-public class SearchResult
+public class FindInFilesSearchResult
 {
 	public required SharpIdeFile File { get; set; }
 	public required int Line { get; set; }
