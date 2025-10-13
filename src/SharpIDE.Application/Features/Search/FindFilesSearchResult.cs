@@ -1,5 +1,4 @@
-﻿using OneOf;
-using SharpIDE.Application.Features.SolutionDiscovery;
+﻿using SharpIDE.Application.Features.SolutionDiscovery;
 
 namespace SharpIDE.Application.Features.Search;
 
