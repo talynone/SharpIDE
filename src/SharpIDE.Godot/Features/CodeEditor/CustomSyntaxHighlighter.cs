@@ -3,6 +3,7 @@ using Godot;
 using Godot.Collections;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Classification;
+using SharpIDE.Application.Features.Analysis;
 using SharpIDE.Godot.Features.CodeEditor;
 using SharpIDE.RazorAccess;
 
@@ -13,10 +14,10 @@ public partial class CustomHighlighter : SyntaxHighlighter
     private readonly Dictionary _emptyDict = new();
 
     private System.Collections.Generic.Dictionary<int, ImmutableArray<SharpIdeRazorClassifiedSpan>> _razorClassifiedSpansByLine = [];
-    private System.Collections.Generic.Dictionary<int, ImmutableArray<(FileLinePositionSpan fileSpan, ClassifiedSpan classifiedSpan)>> _classifiedSpansByLine = [];
+    private System.Collections.Generic.Dictionary<int, ImmutableArray<SharpIdeClassifiedSpan>> _classifiedSpansByLine = [];
     
     
-    public void SetHighlightingData(IEnumerable<(FileLinePositionSpan fileSpan, ClassifiedSpan classifiedSpan)> classifiedSpans, IEnumerable<SharpIdeRazorClassifiedSpan> razorClassifiedSpans)
+    public void SetHighlightingData(IEnumerable<SharpIdeClassifiedSpan> classifiedSpans, IEnumerable<SharpIdeRazorClassifiedSpan> razorClassifiedSpans)
     {
         // separate each line here
         var razorSpansForLine = razorClassifiedSpans
@@ -26,8 +27,8 @@ public partial class CustomHighlighter : SyntaxHighlighter
         _razorClassifiedSpansByLine = razorSpansForLine.ToDictionary(g => g.Key, g => g.ToImmutableArray());
         
         var spansGroupedByFileSpan = classifiedSpans
-            .Where(s => s.classifiedSpan.TextSpan.Length is not 0)
-            .GroupBy(span => span.fileSpan.StartLinePosition.Line)
+            .Where(s => s.ClassifiedSpan.TextSpan.Length is not 0)
+            .GroupBy(span => span.FileSpan.Start.Line)
             .ToList();
         _classifiedSpansByLine = spansGroupedByFileSpan.ToDictionary(g => g.Key, g => g.ToImmutableArray());
     }
@@ -195,8 +196,8 @@ public partial class CustomHighlighter : SyntaxHighlighter
         // consider no linq or ZLinq
         // group by span (start, length matches)
         var spansGroupedByFileSpan = spansForLine
-            .GroupBy(span => span.fileSpan)
-            .Select(group => (fileSpan: group.Key, classifiedSpans: group.Select(s => s.classifiedSpan).ToList()));
+            .GroupBy(span => span.FileSpan)
+            .Select(group => (fileSpan: group.Key, classifiedSpans: group.Select(s => s.ClassifiedSpan).ToList()));
 
         foreach (var (fileSpan, classifiedSpans) in spansGroupedByFileSpan)
         {
@@ -207,7 +208,7 @@ public partial class CustomHighlighter : SyntaxHighlighter
                 if (staticClassifiedSpan is not null) classifiedSpans.Remove(staticClassifiedSpan.Value);
             }
             // Column index of the first character in this span
-            int columnIndex = fileSpan.StartLinePosition.Character;
+            int columnIndex = fileSpan.Start.Character;
 
             // Build the highlight entry
             var highlightInfo = new Dictionary

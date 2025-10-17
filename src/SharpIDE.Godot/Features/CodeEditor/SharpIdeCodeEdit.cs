@@ -454,7 +454,7 @@ public partial class SharpIdeCodeEdit : CodeEdit
 	}
 
 	[RequiresGodotUiThread]
-	private void SetSyntaxHighlightingModel(IEnumerable<(FileLinePositionSpan fileSpan, ClassifiedSpan classifiedSpan)> classifiedSpans, IEnumerable<SharpIdeRazorClassifiedSpan> razorClassifiedSpans)
+	private void SetSyntaxHighlightingModel(IEnumerable<SharpIdeClassifiedSpan> classifiedSpans, IEnumerable<SharpIdeRazorClassifiedSpan> razorClassifiedSpans)
 	{
 		_syntaxHighlighter.SetHighlightingData(classifiedSpans, razorClassifiedSpans);
 		//_syntaxHighlighter.ClearHighlightingCache();

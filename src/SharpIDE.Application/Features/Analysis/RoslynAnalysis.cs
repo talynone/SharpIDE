@@ -294,7 +294,7 @@ public static class RoslynAnalysis
 		return diagnostics;
 	}
 
-	public static async Task<ImmutableArray<(FileLinePositionSpan fileSpan, Diagnostic diagnostic)>> GetDocumentDiagnostics(SharpIdeFile fileModel, CancellationToken cancellationToken = default)
+	public static async Task<ImmutableArray<SharpIdeDiagnostic>> GetDocumentDiagnostics(SharpIdeFile fileModel, CancellationToken cancellationToken = default)
 	{
 		if (fileModel.IsRoslynWorkspaceFile is false) return [];
 		using var _ = SharpIdeOtel.Source.StartActivity($"{nameof(RoslynAnalysis)}.{nameof(GetDocumentDiagnostics)}");
@@ -308,7 +308,7 @@ public static class RoslynAnalysis
 
 		var diagnostics = semanticModel.GetDiagnostics(cancellationToken: cancellationToken);
 		diagnostics = diagnostics.Where(d => d.Severity is not DiagnosticSeverity.Hidden).ToImmutableArray();
-		var result = diagnostics.Select(d => (semanticModel.SyntaxTree.GetMappedLineSpan(d.Location.SourceSpan), d)).ToImmutableArray();
+		var result = diagnostics.Select(d => new SharpIdeDiagnostic(semanticModel.SyntaxTree.GetMappedLineSpan(d.Location.SourceSpan).Span, d)).ToImmutableArray();
 		return result;
 	}
 
@@ -441,7 +441,7 @@ public static class RoslynAnalysis
 	}
 
 	// This is expensive for files that have just been updated, making it suboptimal for real-time highlighting
-	public static async Task<IEnumerable<(FileLinePositionSpan fileSpan, ClassifiedSpan classifiedSpan)>> GetDocumentSyntaxHighlighting(SharpIdeFile fileModel, CancellationToken cancellationToken = default)
+	public static async Task<IEnumerable<SharpIdeClassifiedSpan>> GetDocumentSyntaxHighlighting(SharpIdeFile fileModel, CancellationToken cancellationToken = default)
 	{
 		using var _ = SharpIdeOtel.Source.StartActivity($"{nameof(RoslynAnalysis)}.{nameof(GetDocumentSyntaxHighlighting)}");
 		await _solutionLoadedTcs.Task;
@@ -459,7 +459,7 @@ public static class RoslynAnalysis
 		var root = await syntaxTree!.GetRootAsync(cancellationToken);
 
 		var classifiedSpans = await Classifier.GetClassifiedSpansAsync(document, root.FullSpan, cancellationToken);
-		var result = classifiedSpans.Select(s => (syntaxTree.GetMappedLineSpan(s.TextSpan), s)).ToList();
+		var result = classifiedSpans.Select(s => new SharpIdeClassifiedSpan(syntaxTree.GetMappedLineSpan(s.TextSpan).Span, s)).ToList();
 		return result;
 	}
 
