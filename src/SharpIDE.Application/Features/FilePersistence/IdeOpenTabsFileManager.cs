@@ -69,7 +69,6 @@ public class IdeOpenTabsFileManager(RoslynAnalysis roslynAnalysis)
 		var text = await GetFileTextAsync(file);
 		await WriteAllText(file, text);
 		file.IsDirty.Value = false;
-		GlobalEvents.Instance.IdeFileSavedToDisk.InvokeParallelFireAndForget(file);
 	}
 
 	public async Task UpdateInMemoryIfOpenAndSaveAsync(SharpIdeFile file, string newText)

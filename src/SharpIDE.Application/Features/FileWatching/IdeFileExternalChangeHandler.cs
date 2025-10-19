@@ -1,15 +1,15 @@
-﻿using SharpIDE.Application.Features.Analysis;
-using SharpIDE.Application.Features.Evaluation;
-using SharpIDE.Application.Features.Events;
+﻿using SharpIDE.Application.Features.Events;
 using SharpIDE.Application.Features.SolutionDiscovery.VsPersistence;
 
 namespace SharpIDE.Application.Features.FileWatching;
 
 public class IdeFileExternalChangeHandler
 {
+	private readonly FileChangedService _fileChangedService;
 	public SharpIdeSolutionModel SolutionModel { get; set; } = null!;
-	public IdeFileExternalChangeHandler()
+	public IdeFileExternalChangeHandler(FileChangedService fileChangedService)
 	{
+		_fileChangedService = fileChangedService;
 		GlobalEvents.Instance.FileSystemWatcherInternal.FileChanged.Subscribe(OnFileChanged);
 	}
 
@@ -31,8 +31,7 @@ public class IdeFileExternalChangeHandler
 		var file = SolutionModel.AllFiles.SingleOrDefault(f => f.Path == filePath);
 		if (file is not null)
 		{
-			await file.FileContentsChangedExternallyFromDisk.InvokeParallelAsync();
-			await GlobalEvents.Instance.IdeFileSavedToDisk.InvokeParallelAsync(file);
+			await _fileChangedService.SharpIdeFileChanged(file, await File.ReadAllTextAsync(file.Path), FileChangeType.ExternalChange);
 		}
 	}
 }

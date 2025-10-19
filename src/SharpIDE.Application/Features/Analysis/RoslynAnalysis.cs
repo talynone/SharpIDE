@@ -296,6 +296,7 @@ public class RoslynAnalysis
 	{
 		using var _ = SharpIdeOtel.Source.StartActivity($"{nameof(RoslynAnalysis)}.{nameof(GetProjectDiagnosticsForFile)}");
 		await _solutionLoadedTcs.Task;
+		if (sharpIdeFile.IsRoslynWorkspaceFile is false) return [];
 		var cancellationToken = CancellationToken.None;
 		var project = _workspace!.CurrentSolution.Projects.Single(s => s.FilePath == ((IChildSharpIdeNode)sharpIdeFile).GetNearestProjectNode()!.FilePath);
 		var compilation = await project.GetCompilationAsync(cancellationToken);
@@ -316,6 +317,7 @@ public class RoslynAnalysis
 		if (fileModel.IsRoslynWorkspaceFile is false) return [];
 		using var _ = SharpIdeOtel.Source.StartActivity($"{nameof(RoslynAnalysis)}.{nameof(GetDocumentDiagnostics)}");
 		await _solutionLoadedTcs.Task;
+		if (fileModel.IsRoslynWorkspaceFile is false) return [];
 
 		var document = await GetDocumentForSharpIdeFile(fileModel);
 		Guard.Against.Null(document, nameof(document));
@@ -575,14 +577,15 @@ public class RoslynAnalysis
 		return completions;
 	}
 
-	/// Returns the list of files modified by applying the code action
-	public async Task<List<(SharpIdeFile File, string UpdatedText)>> ApplyCodeActionAsync(CodeAction codeAction)
+	/// Returns the list of files that would be modified by applying the code action. Does not apply the changes to the workspace sln
+	public async Task<List<(SharpIdeFile File, string UpdatedText)>> GetCodeActionApplyChanges(CodeAction codeAction)
 	{
-		using var _ = SharpIdeOtel.Source.StartActivity($"{nameof(RoslynAnalysis)}.{nameof(ApplyCodeActionAsync)}");
+		using var _ = SharpIdeOtel.Source.StartActivity($"{nameof(RoslynAnalysis)}.{nameof(GetCodeActionApplyChanges)}");
 		await _solutionLoadedTcs.Task;
 		var cancellationToken = CancellationToken.None;
 		var operations = await codeAction.GetOperationsAsync(cancellationToken);
 		var changedDocumentIds = new List<DocumentId>();
+		var originalSolution = _workspace!.CurrentSolution;
 		foreach (var operation in operations)
 		{
 			if (operation is ApplyChangesOperation applyChangesOperation)
@@ -615,6 +618,8 @@ public class RoslynAnalysis
 				return (sharpFile, text.ToString());
 			})
 			.ToListAsync(cancellationToken);
+
+		_workspace.TryApplyChanges(originalSolution);
 
 		return changedFilesWithText;
 	}

@@ -10,6 +10,7 @@ using SharpIDE.Application.Features.Analysis;
 using SharpIDE.Application.Features.Debugging;
 using SharpIDE.Application.Features.Events;
 using SharpIDE.Application.Features.FilePersistence;
+using SharpIDE.Application.Features.FileWatching;
 using SharpIDE.Application.Features.Run;
 using SharpIDE.Application.Features.SolutionDiscovery;
 using SharpIDE.Application.Features.SolutionDiscovery.VsPersistence;
@@ -44,6 +45,8 @@ public partial class SharpIdeCodeEdit : CodeEdit
     [Inject] private readonly IdeOpenTabsFileManager _openTabsFileManager = null!;
     [Inject] private readonly RunService _runService = null!;
     [Inject] private readonly RoslynAnalysis _roslynAnalysis = null!;
+    [Inject] private readonly CodeActionService _codeActionService = null!;
+    [Inject] private readonly FileChangedService _fileChangedService = null!;
 	
 	public override void _Ready()
 	{
@@ -66,6 +69,10 @@ public partial class SharpIdeCodeEdit : CodeEdit
 	{
 		if (_currentFile is null) return;
 		GD.Print("Solution altered, updating project diagnostics for current file");
+		var documentSyntaxHighlighting = _roslynAnalysis.GetDocumentSyntaxHighlighting(_currentFile);
+		var razorSyntaxHighlighting = _roslynAnalysis.GetRazorDocumentSyntaxHighlighting(_currentFile);
+		await Task.WhenAll(documentSyntaxHighlighting, razorSyntaxHighlighting);
+		await this.InvokeAsync(async () => SetSyntaxHighlightingModel(await documentSyntaxHighlighting, await razorSyntaxHighlighting));
 		var documentDiagnostics = await _roslynAnalysis.GetDocumentDiagnostics(_currentFile);
 		await this.InvokeAsync(() => SetDiagnostics(documentDiagnostics));
 		var projectDiagnostics = await _roslynAnalysis.GetProjectDiagnosticsForFile(_currentFile);
@@ -108,8 +115,7 @@ public partial class SharpIdeCodeEdit : CodeEdit
 
 	public override void _ExitTree()
 	{
-		_currentFile?.FileContentsChangedExternallyFromDisk.Unsubscribe(OnFileChangedExternallyFromDisk);
-		_currentFile?.FileContentsChangedExternally.Unsubscribe(OnFileChangedExternallyInMemory);
+		_currentFile?.FileContentsChangedExternally.Unsubscribe(OnFileChangedExternally);
 	}
 
 	private void OnBreakpointToggled(long line)
@@ -264,30 +270,14 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		// GD.Print($"Selection changed to line {_currentLine}, start {_selectionStartCol}, end {_selectionEndCol}");
 	}
 
-	private CancellationTokenSource _textChangedCts = new();
 	private void OnTextChanged()
 	{
 		var __ = SharpIdeOtel.Source.StartActivity($"{nameof(SharpIdeCodeEdit)}.{nameof(OnTextChanged)}");
 		_ = Task.GodotRun(async () =>
 		{
 			_currentFile.IsDirty.Value = true;
-			await _openTabsFileManager.UpdateFileTextInMemory(_currentFile, Text);
-			await _textChangedCts.CancelAsync(); // Currently the below methods throw, TODO Fix with suppress throwing, and handle
-			_textChangedCts.Dispose();
-			_textChangedCts = new CancellationTokenSource();
-			_ = Task.GodotRun(async () =>
-			{
-				var syntaxHighlighting = _roslynAnalysis.GetDocumentSyntaxHighlighting(_currentFile, _textChangedCts.Token);
-				var razorSyntaxHighlighting = _roslynAnalysis.GetRazorDocumentSyntaxHighlighting(_currentFile, _textChangedCts.Token);
-				await Task.WhenAll(syntaxHighlighting, razorSyntaxHighlighting);
-				await this.InvokeAsync(async () => SetSyntaxHighlightingModel(await syntaxHighlighting, await razorSyntaxHighlighting));
-				__?.Dispose();
-			});
-			_ = Task.GodotRun(async () =>
-			{
-				var documentDiagnostics = await _roslynAnalysis.GetDocumentDiagnostics(_currentFile, _textChangedCts.Token);
-				await this.InvokeAsync(() => SetDiagnostics(documentDiagnostics));
-			});
+			await _fileChangedService.SharpIdeFileChanged(_currentFile, Text, FileChangeType.IdeUnsavedChange);
+			__?.Dispose();
 		});
 	}
 
@@ -300,31 +290,19 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		
 		_ = Task.GodotRun(async () =>
 		{
-			var affectedFiles = await _roslynAnalysis.ApplyCodeActionAsync(codeAction);
-			// TODO: This can be more efficient - we can just update in memory and proceed with highlighting etc. Save to disk in background.
-			foreach (var (affectedFile, updatedText) in affectedFiles)
-			{
-				await _openTabsFileManager.UpdateInMemoryIfOpenAndSaveAsync(affectedFile, updatedText);
-				affectedFile.FileContentsChangedExternally.InvokeParallelFireAndForget();
-			}
+			await _codeActionService.ApplyCodeAction(codeAction);
 		});
 	}
 
-	private async Task OnFileChangedExternallyInMemory()
+	private async Task OnFileChangedExternally()
 	{
 		var fileContents = await _openTabsFileManager.GetFileTextAsync(_currentFile);
-		var syntaxHighlighting = _roslynAnalysis.GetDocumentSyntaxHighlighting(_currentFile);
-		var razorSyntaxHighlighting = _roslynAnalysis.GetRazorDocumentSyntaxHighlighting(_currentFile);
-		var diagnostics = _roslynAnalysis.GetDocumentDiagnostics(_currentFile);
-		await Task.WhenAll(syntaxHighlighting, razorSyntaxHighlighting, diagnostics);
 		Callable.From(() =>
 		{
 			var currentCaretPosition = GetCaretPosition();
 			var vScroll = GetVScroll();
 			BeginComplexOperation();
 			SetText(fileContents);
-			SetSyntaxHighlightingModel(syntaxHighlighting.Result, razorSyntaxHighlighting.Result);
-			SetDiagnostics(diagnostics.Result);
 			SetCaretLine(currentCaretPosition.line);
 			SetCaretColumn(currentCaretPosition.col);
 			SetVScroll(vScroll);
@@ -348,8 +326,7 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding); // get off the UI thread
 		_currentFile = file;
 		var readFileTask = _openTabsFileManager.GetFileTextAsync(file);
-		_currentFile.FileContentsChangedExternally.Subscribe(OnFileChangedExternallyInMemory);
-		_currentFile.FileContentsChangedExternallyFromDisk.Subscribe(OnFileChangedExternallyFromDisk);
+		_currentFile.FileContentsChangedExternally.Subscribe(OnFileChangedExternally);
 		
 		var syntaxHighlighting = _roslynAnalysis.GetDocumentSyntaxHighlighting(_currentFile);
 		var razorSyntaxHighlighting = _roslynAnalysis.GetRazorDocumentSyntaxHighlighting(_currentFile);
@@ -367,12 +344,6 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		await this.InvokeAsync(async () => SetDiagnostics(await diagnostics));
 		await projectDiagnosticsForFile;
 		await this.InvokeAsync(async () => SetProjectDiagnostics(await projectDiagnosticsForFile));
-	}
-
-	private async Task OnFileChangedExternallyFromDisk()
-	{
-		await _openTabsFileManager.ReloadFileFromDisk(_currentFile);
-		await OnFileChangedExternallyInMemory();
 	}
 
 	public void UnderlineRange(int line, int caretStartCol, int caretEndCol, Color color, float thickness = 1.5f)
@@ -429,23 +400,25 @@ public partial class SharpIdeCodeEdit : CodeEdit
 
 	public override void _UnhandledKeyInput(InputEvent @event)
 	{
-		if (HasFocus() is false) return; // every tab is currently listening for this input. Only respond if we have focus. Consider refactoring this _UnhandledKeyInput to CodeEditorPanel
-		if (@event.IsActionPressed(InputStringNames.CodeFixes))
-		{
-			EmitSignalCodeFixesRequested();
-		}
-		else if (@event.IsActionPressed(InputStringNames.SaveAllFiles))
+		// Let each open tab respond to this event
+		if (@event.IsActionPressed(InputStringNames.SaveAllFiles))
 		{
 			_ = Task.GodotRun(async () =>
 			{
-				await _openTabsFileManager.SaveAllOpenFilesAsync();
+				await _fileChangedService.SharpIdeFileChanged(_currentFile, Text, FileChangeType.IdeSaveToDisk);
 			});
+		}
+		// Now we filter to only the focused tab
+		if (HasFocus() is false) return;
+		if (@event.IsActionPressed(InputStringNames.CodeFixes))
+		{
+			EmitSignalCodeFixesRequested();
 		}
 		else if (@event.IsActionPressed(InputStringNames.SaveFile))
 		{
 			_ = Task.GodotRun(async () =>
 			{
-				await _openTabsFileManager.SaveFileAsync(_currentFile);
+				await _fileChangedService.SharpIdeFileChanged(_currentFile, Text, FileChangeType.IdeSaveToDisk);
 			});
 		}
 	}

@@ -38,7 +38,7 @@ public partial class IdeRoot : Control
 	private readonly PackedScene _runMenuItemScene = ResourceLoader.Load<PackedScene>("res://Features/Run/RunMenuItem.tscn");
 	private TaskCompletionSource _nodeReadyTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-	[Inject] private readonly IdeFileSavedToDiskHandler _savedToDiskHandler = null!;
+	[Inject] private readonly FileChangedService _fileChangedService = null!;
 	[Inject] private readonly IdeFileExternalChangeHandler _fileExternalChangeHandler = null!;
 	[Inject] private readonly IdeFileWatcher _fileWatcher = null!;
 	[Inject] private readonly BuildService _buildService = null!;
@@ -140,7 +140,7 @@ public partial class IdeRoot : Control
 			_searchWindow.Solution = solutionModel;
 			_searchAllFilesWindow.Solution = solutionModel;
 			_fileExternalChangeHandler.SolutionModel = solutionModel;
-			_savedToDiskHandler.SolutionModel = solutionModel;
+			_fileChangedService.SolutionModel = solutionModel;
 			Callable.From(_solutionExplorerPanel.RepopulateTree).CallDeferred();
 			_roslynAnalysis.StartSolutionAnalysis(solutionModel);
 			_fileWatcher.StartWatching(solutionModel);

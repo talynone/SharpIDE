@@ -25,7 +25,8 @@ public partial class DiAutoload : Node
         services.AddScoped<BuildService>();
         services.AddScoped<RunService>();
         services.AddScoped<IdeFileExternalChangeHandler>();
-        services.AddScoped<IdeFileSavedToDiskHandler>();
+        services.AddScoped<CodeActionService>();
+        services.AddScoped<FileChangedService>();
         services.AddScoped<IdeFileWatcher>();
         services.AddScoped<IdeOpenTabsFileManager>();
         services.AddScoped<RoslynAnalysis>();

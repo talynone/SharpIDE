@@ -19,7 +19,6 @@ public class SharpIdeFile : ISharpIdeNode, IChildSharpIdeNode
 	public required ReactiveProperty<bool> IsDirty { get; init; }
 	public required bool SuppressDiskChangeEvents { get; set; } // probably has concurrency issues
 	public required DateTimeOffset? LastIdeWriteTime { get; set; }
-	public EventWrapper<Task> FileContentsChangedExternallyFromDisk { get; } = new(() => Task.CompletedTask); // Refactor to global event - this currently doesn't handle updating un-opened files
 	public EventWrapper<Task> FileContentsChangedExternally { get; } = new(() => Task.CompletedTask);
 
 	[SetsRequiredMembers]
