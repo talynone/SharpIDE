@@ -1,6 +1,7 @@
 using Godot;
 using SharpIDE.Application.Features.FileWatching;
 using SharpIDE.Application.Features.SolutionDiscovery;
+using SharpIDE.Application.Features.SolutionDiscovery.VsPersistence;
 
 namespace SharpIDE.Godot.Features.SolutionExplorer.ContextMenus.Dialogs;
 
@@ -9,7 +10,7 @@ public partial class NewCsharpFileDialog : ConfirmationDialog
     private LineEdit _nameLineEdit = null!;
     private ItemList _fileTypeItemList = null!;
 
-    public SharpIdeFolder ParentFolder { get; set; } = null!;
+    public IFolderOrProject ParentNode { get; set; } = null!;
 
     [Inject] private readonly IdeFileOperationsService _ideFileOperationsService = null!;
     
@@ -72,7 +73,7 @@ public partial class NewCsharpFileDialog : ConfirmationDialog
 
         _ = Task.GodotRun(async () =>
         {
-           await _ideFileOperationsService.CreateCsFile(ParentFolder, fileName);
+           await _ideFileOperationsService.CreateCsFile(ParentNode, fileName);
         });
         QueueFree();
     }

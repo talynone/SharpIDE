@@ -26,13 +26,20 @@ public class IdeFileOperationsService(SharpIdeSolutionModificationService sharpI
 		await _sharpIdeSolutionModificationService.RemoveFile(file);
 	}
 
-	public async Task CreateCsFile(SharpIdeFolder parentFolder, string newFileName)
+	public async Task CreateCsFile(IFolderOrProject parentNode, string newFileName)
 	{
-		var newFilePath = Path.Combine(parentFolder.Path, newFileName);
+		var newFilePath = Path.Combine(GetFileParentNodePath(parentNode), newFileName);
 		var className = Path.GetFileNameWithoutExtension(newFileName);
-		var @namespace = NewFileTemplates.ComputeNamespace(parentFolder);
+		var @namespace = NewFileTemplates.ComputeNamespace(parentNode);
 		var fileText = NewFileTemplates.CsharpClass(className, @namespace);
 		await File.WriteAllTextAsync(newFilePath, fileText);
-		await _sharpIdeSolutionModificationService.CreateFile(parentFolder, newFileName, fileText);
+		await _sharpIdeSolutionModificationService.CreateFile(parentNode, newFilePath, newFileName, fileText);
 	}
+
+	private static string GetFileParentNodePath(IFolderOrProject parentNode) => parentNode switch
+	{
+		SharpIdeFolder folder => folder.Path,
+		SharpIdeProjectModel project => Path.GetDirectoryName(project.FilePath)!,
+		_ => throw new InvalidOperationException("Parent node must be a folder or project")
+	};
 }

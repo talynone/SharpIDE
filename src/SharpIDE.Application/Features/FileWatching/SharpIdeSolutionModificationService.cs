@@ -60,11 +60,10 @@ public class SharpIdeSolutionModificationService(FileChangedService fileChangedS
 		}
 	}
 
-	public async Task CreateFile(SharpIdeFolder parentFolder, string fileName, string contents)
+	public async Task CreateFile(IFolderOrProject parentNode, string newFilePath, string fileName, string contents)
 	{
-		var newFilePath = Path.Combine(parentFolder.Path, fileName);
-		var sharpIdeFile = new SharpIdeFile(newFilePath, fileName, parentFolder, []);
-		parentFolder.Files.Add(sharpIdeFile);
+		var sharpIdeFile = new SharpIdeFile(newFilePath, fileName, parentNode, []);
+		parentNode.Files.Add(sharpIdeFile);
 		SolutionModel.AllFiles.Add(sharpIdeFile);
 		await _fileChangedService.SharpIdeFileAdded(sharpIdeFile, contents);
 	}

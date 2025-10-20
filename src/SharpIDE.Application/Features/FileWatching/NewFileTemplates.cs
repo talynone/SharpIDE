@@ -18,7 +18,7 @@ public static class NewFileTemplates
 		return text;
 	}
 
-	public static string ComputeNamespace(SharpIdeFolder folder)
+	public static string ComputeNamespace(IFolderOrProject folder)
 	{
 		var names = new List<string>();
 		IFolderOrProject? current = folder;

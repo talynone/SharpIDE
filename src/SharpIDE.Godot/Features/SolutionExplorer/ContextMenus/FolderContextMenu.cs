@@ -89,7 +89,7 @@ public partial class SolutionExplorerPanel
         else if (actionId is CreateNewSubmenuOptions.CSharpFile)
         {
             var newCsharpFileDialog = _newCsharpFileDialogScene.Instantiate<NewCsharpFileDialog>();
-            newCsharpFileDialog.ParentFolder = folder;
+            newCsharpFileDialog.ParentNode = folder;
             AddChild(newCsharpFileDialog);
             newCsharpFileDialog.PopupCentered();
         }
