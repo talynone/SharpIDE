@@ -5,6 +5,7 @@
 [node name="NewCsharpFileDialog" type="ConfirmationDialog"]
 oversampling_override = 1.0
 title = "Create new C# file"
+position = Vector2i(0, 36)
 size = Vector2i(350, 230)
 visible = true
 script = ExtResource("1_fod37")
