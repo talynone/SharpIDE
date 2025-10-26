@@ -746,11 +746,11 @@ public class RoslynAnalysis(ILogger<RoslynAnalysis> logger, BuildService buildSe
 		var project = _workspace!.CurrentSolution.Projects.Single(s => s.FilePath == ((IChildSharpIdeNode)fileModel).GetNearestProjectNode()!.FilePath);
 		var document = project.Documents.Single(s => s.FilePath == fileModel.Path);
 		Guard.Against.Null(document, nameof(document));
-		var sourceText = await document.GetTextAsync();
+		var sourceText = await document.GetTextAsync(cancellationToken);
 		var position = sourceText.GetPosition(linePosition);
-		var semanticModel = await document.GetSemanticModelAsync();
+		var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
 		Guard.Against.Null(semanticModel, nameof(semanticModel));
-		var syntaxRoot = await document.GetSyntaxRootAsync();
+		var syntaxRoot = await document.GetSyntaxRootAsync(cancellationToken);
 		var semanticInfo = await SymbolFinder.GetSemanticInfoAtPositionAsync(semanticModel, position, document.Project.Solution.Services, cancellationToken).ConfigureAwait(false);
 		var (symbol, linePositionSpan) = GetSymbolAtPosition(semanticModel, syntaxRoot!, position);
 		return (symbol, linePositionSpan, semanticInfo);
