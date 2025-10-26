@@ -10,12 +10,14 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.Completion;
+using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Razor.Remote;
 using Microsoft.CodeAnalysis.Razor.SemanticTokens;
 using Microsoft.CodeAnalysis.Remote.Razor.ProjectSystem;
 using Microsoft.CodeAnalysis.Remote.Razor.SemanticTokens;
+using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.Logging;
 using Roslyn.LanguageServer.Protocol;
@@ -586,7 +588,7 @@ public class RoslynAnalysis(ILogger<RoslynAnalysis> logger, BuildService buildSe
 	public async Task<(string updatedText, SharpIdeFileLinePosition sharpIdeFileLinePosition)> GetCompletionApplyChanges(SharpIdeFile file, CompletionItem completionItem, CancellationToken cancellationToken = default)
 	{
 		var documentId = _workspace!.CurrentSolution.GetDocumentIdsWithFilePath(file.Path).Single();
-		var document = _workspace.CurrentSolution.GetRequiredDocument(documentId);
+		var document = SolutionExtensions.GetRequiredDocument(_workspace.CurrentSolution, documentId);
 		var completionService = CompletionService.GetService(document) ?? throw new InvalidOperationException("Completion service is not available for the document.");
 
 		var completionChange = await completionService.GetChangeAsync(document, completionItem, commitCharacter: '.', cancellationToken: cancellationToken);
@@ -661,6 +663,36 @@ public class RoslynAnalysis(ILogger<RoslynAnalysis> logger, BuildService buildSe
 		return changedFilesWithText;
 	}
 
+	public async Task<ISymbol?> GetEnclosingSymbolForReferenceLocation(ReferenceLocation referenceLocation)
+	{
+		var semanticModel = await referenceLocation.Document.GetSemanticModelAsync();
+		if (semanticModel is null) return null;
+		var enclosingSymbol = ReferenceLocationExtensions.GetEnclosingMethodOrPropertyOrField(semanticModel, referenceLocation);
+		return enclosingSymbol;
+	}
+
+	public async Task<ImmutableArray<ReferencedSymbol>> FindAllSymbolReferences(ISymbol symbol, CancellationToken cancellationToken = default)
+	{
+		using var _ = SharpIdeOtel.Source.StartActivity($"{nameof(RoslynAnalysis)}.{nameof(FindAllSymbolReferences)}");
+		await _solutionLoadedTcs.Task;
+
+		var solution = _workspace!.CurrentSolution;
+		var references = await SymbolFinder.FindReferencesAsync(symbol, solution, cancellationToken);
+		return references.AsImmutable();
+	}
+
+	public async Task<(ISymbol?, LinePositionSpan?, TokenSemanticInfo?)> LookupSymbolSemanticInfo(SharpIdeFile fileModel, LinePosition linePosition)
+	{
+		await _solutionLoadedTcs.Task;
+		var (symbol, linePositionSpan, semanticInfo) = fileModel switch
+		{
+			{ IsRazorFile: true } => await LookupSymbolSemanticInfoInRazor(fileModel, linePosition),
+			{ IsCsharpFile: true } => await LookupSymbolSemanticInfoInCs(fileModel, linePosition),
+			_ => (null, null, null)
+		};
+		return (symbol, linePositionSpan, semanticInfo);
+	}
+
 	public async Task<(ISymbol?, LinePositionSpan?)> LookupSymbol(SharpIdeFile fileModel, LinePosition linePosition)
 	{
 		await _solutionLoadedTcs.Task;
@@ -707,6 +739,46 @@ public class RoslynAnalysis(ILogger<RoslynAnalysis> logger, BuildService buildSe
 		Guard.Against.Null(semanticModel, nameof(semanticModel));
 		var syntaxRoot = await document.GetSyntaxRootAsync();
 		return GetSymbolAtPosition(semanticModel, syntaxRoot!, position);
+	}
+
+	private async Task<(ISymbol? symbol, LinePositionSpan? linePositionSpan, TokenSemanticInfo? semanticInfo)> LookupSymbolSemanticInfoInCs(SharpIdeFile fileModel, LinePosition linePosition, CancellationToken cancellationToken = default)
+	{
+		var project = _workspace!.CurrentSolution.Projects.Single(s => s.FilePath == ((IChildSharpIdeNode)fileModel).GetNearestProjectNode()!.FilePath);
+		var document = project.Documents.Single(s => s.FilePath == fileModel.Path);
+		Guard.Against.Null(document, nameof(document));
+		var sourceText = await document.GetTextAsync();
+		var position = sourceText.GetPosition(linePosition);
+		var semanticModel = await document.GetSemanticModelAsync();
+		Guard.Against.Null(semanticModel, nameof(semanticModel));
+		var syntaxRoot = await document.GetSyntaxRootAsync();
+		var semanticInfo = await SymbolFinder.GetSemanticInfoAtPositionAsync(semanticModel, position, document.Project.Solution.Services, cancellationToken).ConfigureAwait(false);
+		var (symbol, linePositionSpan) = GetSymbolAtPosition(semanticModel, syntaxRoot!, position);
+		return (symbol, linePositionSpan, semanticInfo);
+	}
+
+	private async Task<(ISymbol? symbol, LinePositionSpan? linePositionSpan, TokenSemanticInfo? semanticInfo)> LookupSymbolSemanticInfoInRazor(SharpIdeFile fileModel, LinePosition linePosition, CancellationToken cancellationToken = default)
+	{
+		var sharpIdeProjectModel = ((IChildSharpIdeNode) fileModel).GetNearestProjectNode()!;
+		var project = _workspace!.CurrentSolution.Projects.Single(s => s.FilePath == sharpIdeProjectModel!.FilePath);
+
+		var additionalDocument = project.AdditionalDocuments.Single(s => s.FilePath == fileModel.Path);
+
+		var razorProjectSnapshot = _snapshotManager!.GetSnapshot(project);
+		var documentSnapshot = razorProjectSnapshot.GetDocument(additionalDocument);
+
+		var razorCodeDocument = await razorProjectSnapshot.GetRequiredCodeDocumentAsync(documentSnapshot, cancellationToken);
+		var razorCSharpDocument = razorCodeDocument.GetRequiredCSharpDocument();
+		var generatedDocument = await razorProjectSnapshot.GetRequiredGeneratedDocumentAsync(documentSnapshot, cancellationToken);
+		var generatedDocSyntaxRoot = await generatedDocument.GetSyntaxRootAsync(cancellationToken);
+
+		var razorText = await additionalDocument.GetTextAsync(cancellationToken);
+
+		var mappedPosition = MapRazorLinePositionToGeneratedCSharpAbsolutePosition(razorCSharpDocument, razorText, linePosition);
+		var semanticModel = await generatedDocument.GetSemanticModelAsync(cancellationToken);
+		var (symbol, linePositionSpan) = GetSymbolAtPosition(semanticModel!, generatedDocSyntaxRoot!, mappedPosition!.Value);
+
+		var semanticInfo = await SymbolFinder.GetSemanticInfoAtPositionAsync(semanticModel!, mappedPosition.Value, generatedDocument.Project.Solution.Services, cancellationToken).ConfigureAwait(false);
+		return (symbol, linePositionSpan, semanticInfo);
 	}
 
 	private (ISymbol? symbol, LinePositionSpan? linePositionSpan) GetSymbolAtPosition(SemanticModel semanticModel, SyntaxNode root, int position)
