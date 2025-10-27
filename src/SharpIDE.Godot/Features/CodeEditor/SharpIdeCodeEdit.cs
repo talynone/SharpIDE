@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Rename.ConflictEngine;
 using Microsoft.CodeAnalysis.Shared.Extensions;
+using Microsoft.CodeAnalysis.Tags;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 using SharpIDE.Application;
@@ -443,8 +444,9 @@ public partial class SharpIdeCodeEdit : CodeEdit
 				{
 					var symbolKindString = CollectionExtensions.GetValueOrDefault(completionItem.Properties, "SymbolKind");
 					var symbolKind = symbolKindString is null ? null : (SymbolKind?)int.Parse(symbolKindString);
+					var wellKnownTags = completionItem.Tags;
 					var typeKindString = completionItem.Tags[0];
-					var accessibilityModifierString = completionItem.Tags.Skip(1).FirstOrDefault(); // accessibility is not always supplied
+					var accessibilityModifierString = completionItem.Tags.Skip(1).FirstOrDefault(); // accessibility is not always supplied, and I don't think there's actually any guarantee on the order of tags. See WellKnownTags and WellKnownTagArrays
 					TypeKind? typeKind = Enum.TryParse<TypeKind>(typeKindString, out var tk) ? tk : null;
 					Accessibility? accessibilityModifier = Enum.TryParse<Accessibility>(accessibilityModifierString, out var am) ? am : null;
 					var godotCompletionType = symbolKind switch
@@ -456,7 +458,8 @@ public partial class SharpIdeCodeEdit : CodeEdit
 						SymbolKind.Field => CodeCompletionKind.Member,
 						_ => CodeCompletionKind.PlainText
 					};
-					var icon = GetIconForCompletion(symbolKind, typeKind, accessibilityModifier);
+					var isKeyword = wellKnownTags.Contains(WellKnownTags.Keyword);
+					var icon = GetIconForCompletion(symbolKind, typeKind, accessibilityModifier, isKeyword);
 					AddCodeCompletionOption(godotCompletionType, completionItem.DisplayText, completionItem.DisplayText, icon: icon, value: new RefCountedContainer<CompletionItem>(completionItem));
 				}
 				// partially working - displays menu only when caret is what CodeEdit determines as valid
