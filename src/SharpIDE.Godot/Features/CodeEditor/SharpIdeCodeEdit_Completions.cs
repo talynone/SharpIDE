@@ -13,6 +13,9 @@ public partial class SharpIdeCodeEdit
     private readonly Texture2D _propertyIcon = ResourceLoader.Load<Texture2D>("uid://y5pwrwwrjqmc");
     private readonly Texture2D _keywordIcon = ResourceLoader.Load<Texture2D>("uid://b0ujhoq2xg2v0");
     private readonly Texture2D _namespaceIcon = ResourceLoader.Load<Texture2D>("uid://bob5blfjll4h3");
+    private readonly Texture2D _eventIcon = ResourceLoader.Load<Texture2D>("uid://c3upo3lxmgtls");
+    // delegate
+    // enum
 
     private Texture2D? GetIconForCompletion(SymbolKind? symbolKind, TypeKind? typeKind, Accessibility? accessibility, bool isKeyword)
     {
@@ -26,6 +29,7 @@ public partial class SharpIdeCodeEdit
             (SymbolKind.Field, _, _) => _fieldIcon,
             (SymbolKind.Property, _, _) => _propertyIcon,
             (SymbolKind.Namespace, _, _) => _namespaceIcon,
+            (SymbolKind.Event, _, _) => _eventIcon,
             _ => null
         };    
         return texture;
