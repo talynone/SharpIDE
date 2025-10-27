@@ -245,6 +245,13 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		SetSymbolLookupWordAsValid(true);
 	}
 
+	private void CloseSymbolHoverWindow()
+	{
+		_symbolHoverTimer?.EmitSignal(Timer.SignalName.Timeout);
+		_symbolHoverTimer = null;
+	}
+
+	private Timer? _symbolHoverTimer = null!;
 	// This method is a bit of a disaster - we create an additional invisible Window, so that the tooltip window doesn't disappear while the mouse is over the hovered symbol
 	private async void OnSymbolHovered(string symbol, long line, long column)
 	{
@@ -268,6 +275,10 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		symbolNameHoverWindow.PopupWindow = true;
 		symbolNameHoverWindow.MinimizeDisabled = true;
 		symbolNameHoverWindow.MaximizeDisabled = true;
+		symbolNameHoverWindow.Exclusive = false;
+		symbolNameHoverWindow.Transient = true;
+		symbolNameHoverWindow.TransientToFocused = true;
+		symbolNameHoverWindow.Unfocusable = true;
 		// To debug location, make type a PopupPanel, and uncomment
 		//symbolNameHoverWindow.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color(1, 0, 0, 0.5f) });
 		
@@ -292,6 +303,10 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		tooltipWindow.PopupWindow = true;
 		tooltipWindow.MinimizeDisabled = true;
 		tooltipWindow.MaximizeDisabled = true;
+		tooltipWindow.Exclusive = false;
+		tooltipWindow.Transient = true;
+		tooltipWindow.TransientToFocused = true;
+		tooltipWindow.Unfocusable = true;
 		
 		var timer = new Timer { WaitTime = 0.05f, OneShot = true, Autostart = false };
 		tooltipWindow.AddChild(timer);
@@ -300,6 +315,7 @@ public partial class SharpIdeCodeEdit : CodeEdit
 			tooltipWindow.QueueFree();
 			symbolNameHoverWindow.QueueFree();
 		};
+		_symbolHoverTimer = timer;
 	
 		tooltipWindow.MouseExited += () => timer.Start();
 		tooltipWindow.MouseEntered += () => timer.Stop();
@@ -512,6 +528,7 @@ public partial class SharpIdeCodeEdit : CodeEdit
 
 	public override void _UnhandledKeyInput(InputEvent @event)
 	{
+		CloseSymbolHoverWindow();
 		// Let each open tab respond to this event
 		if (@event.IsActionPressed(InputStringNames.SaveAllFiles))
 		{
@@ -526,7 +543,7 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		{
 			EmitSignalCodeFixesRequested();
 		}
-		else if (@event.IsActionPressed(InputStringNames.SaveFile))
+		else if (@event.IsActionPressed(InputStringNames.SaveFile) && @event.IsActionPressed(InputStringNames.SaveAllFiles) is false)
 		{
 			_ = Task.GodotRun(async () =>
 			{
