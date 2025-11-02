@@ -13,10 +13,11 @@ public partial class NugetPanel : Control
     private OptionButton _solutionOrProjectOptionButton = null!;
     
     private NugetPackageDetails _nugetPackageDetails = null!;
-    
-    public SharpIdeSolutionModel? Solution { get; set; }
+
+    private SharpIdeSolutionModel? _solution;
     
     [Inject] private readonly NugetClientService _nugetClientService = null!;
+    [Inject] private readonly SharpIdeSolutionAccessor _sharpIdeSolutionAccessor;
     
     private readonly PackedScene _packageEntryScene = ResourceLoader.Load<PackedScene>("uid://cqc2xlt81ju8s");
     private readonly Texture2D _csprojIcon = ResourceLoader.Load<Texture2D>("uid://cqt30ma6xgder");
@@ -43,19 +44,23 @@ public partial class NugetPanel : Control
     {
         _ = Task.GodotRun(async () =>
         {
-            await Task.Delay(300);
+            if (_solution is null)
+            {
+                await _sharpIdeSolutionAccessor.SolutionReadyTcs.Task;
+                _solution = _sharpIdeSolutionAccessor.SolutionModel;
+            }
             await this.InvokeAsync(() =>
             {
-                foreach (var project in Solution!.AllProjects)
+                foreach (var project in _solution!.AllProjects)
                 {
                     _solutionOrProjectOptionButton.AddIconItem(_csprojIcon, project.Name);
                 }
             });
-            var result = await _nugetClientService.GetTop100Results(Solution!.DirectoryPath);
+            var result = await _nugetClientService.GetTop100Results(_solution!.DirectoryPath);
             
             _ = Task.GodotRun(async () =>
             {
-                var project = Solution.AllProjects.First(s => s.Name == "ProjectA");
+                var project = _solution.AllProjects.First(s => s.Name == "ProjectA");
                 await project.MsBuildEvaluationProjectTask;
                 var installedPackages = await ProjectEvaluation.GetPackageReferencesForProject(project);
                 var idePackageResult = await _nugetClientService.GetPackagesForInstalledPackages(project.ChildNodeBasePath, installedPackages);

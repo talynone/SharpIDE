@@ -48,6 +48,7 @@ public partial class IdeRoot : Control
     [Inject] private readonly IdeOpenTabsFileManager _openTabsFileManager = null!;
     [Inject] private readonly RoslynAnalysis _roslynAnalysis = null!;
     [Inject] private readonly SharpIdeSolutionModificationService _sharpIdeSolutionModificationService = null!;
+    [Inject] private readonly SharpIdeSolutionAccessor _sharpIdeSolutionAccessor = null!;
     [Inject] private readonly IdeNavigationHistoryService _navigationHistoryService = null!;
     [Inject] private readonly ILogger<IdeRoot> _logger = null!;
 
@@ -147,6 +148,8 @@ public partial class IdeRoot : Control
 			await _nodeReadyTcs.Task;
 			// Do not use injected services until after _nodeReadyTcs - Services aren't injected until _Ready
 			_logger.LogInformation("Solution model fully created in {ElapsedMilliseconds} ms", timer.ElapsedMilliseconds);
+			_sharpIdeSolutionAccessor.SolutionModel = solutionModel;
+			_sharpIdeSolutionAccessor.SolutionReadyTcs.SetResult();
 			_solutionExplorerPanel.SolutionModel = solutionModel;
 			_codeEditorPanel.Solution = solutionModel;
 			_bottomPanelManager.Solution = solutionModel;

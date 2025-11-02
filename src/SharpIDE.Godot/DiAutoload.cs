@@ -45,6 +45,7 @@ public partial class DiAutoload : Node
         services.AddScoped<RoslynAnalysis>();
         services.AddScoped<IdeFileOperationsService>();
         services.AddScoped<SharpIdeSolutionModificationService>();
+        services.AddScoped<SharpIdeSolutionAccessor>();
 
         services.AddHttpClient();
         services.AddLogging(builder =>
