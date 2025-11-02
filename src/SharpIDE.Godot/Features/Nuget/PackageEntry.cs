@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Godot;
+using NuGet.Versioning;
 using SharpIDE.Application.Features.Nuget;
 
 namespace SharpIDE.Godot.Features.Nuget;
@@ -65,7 +66,7 @@ public partial class PackageEntry : MarginContainer
                 .ToList();
             _button.TooltipText = $"""
                                   Implicitly Referenced Versions
-                                  {string.Join("\n", transitiveOriginsGroupedByVersion.Select(t => $"{t.RequestedVersion} by {string.Join(", ", t.PackageNames)}"))}
+                                  {string.Join("\n", transitiveOriginsGroupedByVersion.Select(t => $"{t.RequestedVersion.ToString("p", VersionRangeFormatter.Instance)} by {string.Join(", ", t.PackageNames)}"))}
                                   """;
         }
         _installedVersionLabel.Text = installedPackagedInfo?.IsTransitive is true ? $"({installedPackagedInfo?.Version.ToNormalizedString()})" : installedPackagedInfo?.Version.ToNormalizedString();
