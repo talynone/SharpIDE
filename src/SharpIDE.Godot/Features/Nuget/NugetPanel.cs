@@ -89,7 +89,7 @@ public partial class NugetPanel : Control
 	{
 		var projects = slnOrProject switch
 		{
-			SharpIdeSolutionModel solutionModel => solutionModel.AllProjects,
+			SharpIdeSolutionModel solutionModel => _projects.Skip(1).ToHashSet(),
 			SharpIdeProjectModel projectModel => [projectModel],
 			_ => throw new InvalidOperationException("Unknown solution or project type")
 		};

@@ -63,6 +63,7 @@ public partial class NugetPackageDetails : VBoxContainer
 		var scenes = projects.Select(s =>
 		{
 			var scene = _packageDetailsProjectEntryScene.Instantiate<PackageDetailsProjectEntry>();
+			scene.ProjectModel = s;
 			return scene;
 		}).ToList();
 		await this.InvokeAsync(() =>
