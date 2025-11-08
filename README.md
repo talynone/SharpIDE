@@ -4,7 +4,7 @@
   SharpIDE
 </h1>
 
-An open source, modern & fast IDE for .NET
+A modern, cross platform & open source IDE for .NET
 
 <img width="1638" height="935" alt="image" src="https://github.com/user-attachments/assets/bce91555-a1f2-43ab-a525-8353b4c7cff2" />
 
