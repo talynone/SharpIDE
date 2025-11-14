@@ -6,7 +6,8 @@ using ParallelPipelines.Host;
 var builder = Host.CreateApplicationBuilder(args);
 
 builder
-	.Configuration.AddJsonFile("appsettings.Development.json", true)
+	.Configuration.SetBasePath(AppContext.BaseDirectory)
+	.AddJsonFile("appsettings.json", false)
 	.AddUserSecrets<Program>()
 	.AddEnvironmentVariables();
 
@@ -17,6 +18,7 @@ builder.Services.AddParallelPipelines(
 		config.Local.OutputSummaryToFile = true;
 		config.Cicd.OutputSummaryToGithubStepSummary = true;
 		config.Cicd.WriteCliCommandOutputsToSummary = true;
+		config.AllowedEnvironmentNames = ["prod"];
 	}
 );
 builder.Services
