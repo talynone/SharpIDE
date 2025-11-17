@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://b2oniigcp5ew5"]
+[gd_scene load_steps=23 format=3 uid="uid://b2oniigcp5ew5"]
 
 [ext_resource type="FontFile" uid="uid://38igu11xwba6" path="res://Inter-VariableFont.ttf" id="1_7ptyn"]
 [ext_resource type="Script" uid="uid://bavypuy7b375x" path="res://IdeRoot.cs" id="1_whawi"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://kvnhndc3l6ih" path="res://Features/CustomControls/InvertedVSplitContainer.cs" id="3_0ybuf"]
 [ext_resource type="PackedScene" uid="uid://biyhfwx36ium8" path="res://Features/LeftSideBar/LeftSideBar.tscn" id="3_f60gr"]
 [ext_resource type="PackedScene" uid="uid://bgpc5vsddmakc" path="res://Features/Navigation/ForwardBackwardButtonContainer.tscn" id="3_ptnvy"]
+[ext_resource type="Texture2D" uid="uid://ctwb5vyjuy5m1" path="res://Resources/settings.svg" id="5_pm5al"]
 [ext_resource type="PackedScene" uid="uid://cy1bb32g7j7dr" path="res://Features/SolutionExplorer/SolutionExplorerPanel.tscn" id="5_s2dv6"]
 [ext_resource type="PackedScene" uid="uid://bcoytt3bw0gpe" path="res://Features/Run/RunPanel.tscn" id="5_y3aoi"]
 [ext_resource type="Script" uid="uid://cvvgp42r3nml8" path="res://Features/BottomPanel/BottomPanelManager.cs" id="7_i62lx"]
@@ -104,6 +105,7 @@ size_flags_vertical = 4
 focus_mode = 0
 disabled = true
 icon = ExtResource("2_8x8ub")
+icon_alignment = 1
 
 [node name="RunMenuPopup" type="Popup" parent="VBoxContainer/Panel/HBoxContainer/RunMenuButton"]
 unique_name_in_owner = true
@@ -122,6 +124,12 @@ theme_override_constants/margin_bottom = 5
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/Panel/HBoxContainer/RunMenuButton/RunMenuPopup/MarginContainer"]
 layout_mode = 2
+
+[node name="Button" type="Button" parent="VBoxContainer/Panel/HBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 4
+icon = ExtResource("5_pm5al")
+icon_alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
