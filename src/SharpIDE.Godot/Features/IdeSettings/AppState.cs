@@ -11,6 +11,7 @@ public class IdeSettings
 {
     public bool AutoOpenLastSolution { get; set; }
     public string? DebuggerExecutablePath { get; set; }
+    public float UiScale { get; set; } = 1.0f;
 }
 
 public record RecentSln

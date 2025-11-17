@@ -8,6 +8,7 @@ title = "Settings"
 initial_position = 2
 size = Vector2i(845, 400)
 transient = true
+transient_to_focused = true
 exclusive = true
 popup_window = true
 popup_wm_hint = true
@@ -27,16 +28,8 @@ layout_mode = 2
 layout_mode = 2
 text = "UI Scale"
 
-[node name="HSlider" type="HSlider" parent="VBoxContainer/HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-min_value = 0.5
-max_value = 8.0
-step = 0.1
-value = 1.0
-
-[node name="SpinBox" type="SpinBox" parent="VBoxContainer/HBoxContainer"]
+[node name="UiScaleSpinBox" type="SpinBox" parent="VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 min_value = 0.5
 max_value = 8.0

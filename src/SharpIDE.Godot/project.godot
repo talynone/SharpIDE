@@ -25,6 +25,7 @@ ObservableTrackerRuntimeHook="*res://addons/R3.Godot/ObservableTrackerRuntimeHoo
 [display]
 
 window/energy_saving/keep_screen_on=false
+window/stretch/scale_mode="integer"
 
 [dotnet]
 
@@ -33,6 +34,11 @@ project/assembly_name="SharpIDE.Godot"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/R3.Godot/plugin.cfg", "res://addons/csharp_gdextension_bindgen/plugin.cfg")
+
+[gui]
+
+theme/default_font_multichannel_signed_distance_field=true
+theme/default_font_generate_mipmaps=true
 
 [input]
 
