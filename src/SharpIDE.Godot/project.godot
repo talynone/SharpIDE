@@ -34,11 +34,6 @@ project/assembly_name="SharpIDE.Godot"
 
 enabled=PackedStringArray("res://addons/R3.Godot/plugin.cfg", "res://addons/csharp_gdextension_bindgen/plugin.cfg")
 
-[gui]
-
-theme/default_font_multichannel_signed_distance_field=true
-theme/default_font_generate_mipmaps=true
-
 [input]
 
 CodeFixes={

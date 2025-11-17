@@ -27,6 +27,7 @@ public partial class IdeWindow : Control
         SharpIdeMsbuildLocator.Register();
         GodotOtelExtensions.AddServiceDefaults();
         Singletons.AppState = AppStateLoader.LoadAppStateFromConfigFile();
+        GetTree().GetRoot().ContentScaleFactor = Singletons.AppState.IdeSettings.UiScale;
         //GetWindow().SetMinSize(new Vector2I(1152, 648));
         Callable.From(() => PickSolution(true)).CallDeferred();
     }

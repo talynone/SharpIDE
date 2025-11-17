@@ -9,8 +9,13 @@ public partial class SettingsWindow : Window
     {
         CloseRequested += Hide;
         _uiScaleSpinBox = GetNode<SpinBox>("%UiScaleSpinBox");
-        //_uiScaleSlider.Value = Singletons.AppState.IdeSettings.UiScale;
         _uiScaleSpinBox.ValueChanged += OnUiScaleSpinBoxValueChanged;
+        AboutToPopup += OnAboutToPopup;
+    }
+
+    private void OnAboutToPopup()
+    {
+        _uiScaleSpinBox.Value = Singletons.AppState.IdeSettings.UiScale;
     }
 
     private void OnUiScaleSpinBoxValueChanged(double value)
@@ -19,5 +24,6 @@ public partial class SettingsWindow : Window
         Singletons.AppState.IdeSettings.UiScale = valueFloat;
         
         GetTree().GetRoot().ContentScaleFactor = valueFloat;
+        PopupCenteredRatio(0.5f); // Re-size the window after scaling
     }
 }

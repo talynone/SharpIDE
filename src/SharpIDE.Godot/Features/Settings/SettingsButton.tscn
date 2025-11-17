@@ -12,3 +12,4 @@ script = ExtResource("2_e87mh")
 
 [node name="SettingsWindow" parent="." instance=ExtResource("3_x07a0")]
 unique_name_in_owner = true
+visible = false
