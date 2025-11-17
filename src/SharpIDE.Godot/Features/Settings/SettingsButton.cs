@@ -4,12 +4,12 @@ namespace SharpIDE.Godot.Features.Settings;
 
 public partial class SettingsButton : Button
 {
-    private Window _settingsWindow = null!;
+    private SettingsWindow _settingsWindow = null!;
     
     public override void _Ready()
     {
-        _settingsWindow = GetNode<Window>("%SettingsWindow");
-        _settingsWindow.CloseRequested += () => _settingsWindow.Hide();
+        _settingsWindow = GetNode<SettingsWindow>("%SettingsWindow");
+        _settingsWindow.Hide();
         Pressed += OnPressed;
     }
 

@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://dnh73b3speojs"]
+
+[ext_resource type="Script" uid="uid://b7umbl07avv6d" path="res://Features/Settings/SettingsWindow.cs" id="1_xkmyt"]
+
+[node name="SettingsWindow" type="Window"]
+oversampling_override = 1.0
+title = "Settings"
+initial_position = 2
+size = Vector2i(845, 400)
+transient = true
+exclusive = true
+popup_window = true
+popup_wm_hint = true
+script = ExtResource("1_xkmyt")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "UI Scale"
+
+[node name="HSlider" type="HSlider" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 0.5
+max_value = 8.0
+step = 0.1
+value = 1.0
+
+[node name="SpinBox" type="SpinBox" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+min_value = 0.5
+max_value = 8.0
+step = 0.1
+value = 1.0
+update_on_text_changed = true
+custom_arrow_step = 0.1

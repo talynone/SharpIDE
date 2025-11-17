@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://b70jhun5a4las"]
+[gd_scene load_steps=3 format=3 uid="uid://b70jhun5a4las"]
 
 [ext_resource type="Script" uid="uid://bul4kkrg1yhqx" path="res://IdeWindow.cs" id="1_3do1e"]
+[ext_resource type="PackedScene" uid="uid://dnh73b3speojs" path="res://Features/Settings/SettingsWindow.tscn" id="2_qq1cd"]
 
 [node name="IdeWindow" type="Control"]
 layout_mode = 3
@@ -11,9 +12,5 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_3do1e")
 
-[node name="Window" type="Window" parent="."]
-oversampling_override = 1.0
-title = "Open Solution"
-initial_position = 2
+[node name="SettingsWindow" parent="." instance=ExtResource("2_qq1cd")]
 visible = false
-popup_window = true
