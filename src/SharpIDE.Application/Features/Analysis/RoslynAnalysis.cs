@@ -234,10 +234,9 @@ public class RoslynAnalysis(ILogger<RoslynAnalysis> logger, BuildService buildSe
 		// The ProjectIds will not match however, so we need to match on FilePath
 		// Since the ProjectIds don't match, we also need to remap all ProjectReferences to the existing ProjectIds
 		// same for documents
-		// TODO: Handle multiple TFMs - loadedProjectInfos would contain multiple projects with the same FilePath
 		var projectInfosToUpdateWith = loadedProjectInfos.Select(loadedProjectInfo =>
 		{
-			var existingProject = _workspace.CurrentSolution.Projects.Single(p => p.FilePath == loadedProjectInfo.FilePath);
+			var existingProject = _workspace.CurrentSolution.Projects.Single(p => p.FilePath == loadedProjectInfo.FilePath && p.Name == loadedProjectInfo.Name);
 			var projectInfo = loadedProjectInfo
 				.WithId(existingProject.Id)
 				.WithDocuments(MapDocuments(_workspace.CurrentSolution, existingProject.Id, loadedProjectInfo.Documents))
