@@ -301,13 +301,25 @@ public class RoslynAnalysis(ILogger<RoslynAnalysis> logger, BuildService buildSe
 		// Performance improvements of ~15% have been observed with a large solution (100+ projects) by parallelizing this with Task.WhenAll, however it seems much heavier (14700K crashes sometimes 😅) so re-evaluate later
 		foreach (var project in _sharpIdeSolutionModel!.AllProjects)
 		{
-			var projectDiagnostics = await GetProjectDiagnostics(project, cancellationToken);
-			// TODO: only add and remove diffs
-			project.Diagnostics.RemoveRange(project.Diagnostics);
-			project.Diagnostics.AddRange(projectDiagnostics);
+			await UpdateProjectDiagnostics(project, cancellationToken);
 		}
 		timer.Stop();
 		_logger.LogInformation("RoslynAnalysis: Solution diagnostics updated in {ElapsedMilliseconds}ms", timer.ElapsedMilliseconds);
+	}
+
+	public async Task UpdateProjectDiagnostics(SharpIdeProjectModel project, CancellationToken cancellationToken = default)
+	{
+		var projectDiagnostics = await GetProjectDiagnostics(project, cancellationToken);
+		// TODO: only add and remove diffs
+		project.Diagnostics.RemoveRange(project.Diagnostics);
+		project.Diagnostics.AddRange(projectDiagnostics);
+	}
+
+	public async Task UpdateProjectDiagnosticsForFile(SharpIdeFile sharpIdeFile, CancellationToken cancellationToken = default)
+	{
+		var project = ((IChildSharpIdeNode) sharpIdeFile).GetNearestProjectNode();
+		Guard.Against.Null(project);
+		await UpdateProjectDiagnostics(project, cancellationToken);
 	}
 
 	public async Task<ImmutableArray<SharpIdeDiagnostic>> GetProjectDiagnostics(SharpIdeProjectModel projectModel, CancellationToken cancellationToken = default)

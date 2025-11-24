@@ -104,16 +104,22 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		if (_fileDeleted) return;
 		GD.Print($"[{_currentFile.Name}] Solution altered, updating project diagnostics for file");
 		var newCt = _solutionAlteredCancellationTokenSeries.CreateNext();
+		var hasFocus = this.InvokeAsync(HasFocus);
 		var documentSyntaxHighlighting = _roslynAnalysis.GetDocumentSyntaxHighlighting(_currentFile, newCt);
 		var razorSyntaxHighlighting = _roslynAnalysis.GetRazorDocumentSyntaxHighlighting(_currentFile, newCt);
 		await Task.WhenAll(documentSyntaxHighlighting, razorSyntaxHighlighting).WaitAsync(newCt).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 		if (newCt.IsCancellationRequested) return;
 		var documentDiagnosticsTask = _roslynAnalysis.GetDocumentDiagnostics(_currentFile, newCt);
 		await this.InvokeAsync(async () => SetSyntaxHighlightingModel(await documentSyntaxHighlighting, await razorSyntaxHighlighting));
-		await ((Task)documentDiagnosticsTask).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+		await documentDiagnosticsTask.AsTask().ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 		if (newCt.IsCancellationRequested) return;
 		var documentDiagnostics = await documentDiagnosticsTask;
 		await this.InvokeAsync(() => SetDiagnostics(documentDiagnostics));
+		if (await hasFocus)
+		{
+			await _roslynAnalysis.UpdateProjectDiagnosticsForFile(_currentFile, newCt).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+			if (newCt.IsCancellationRequested) return;
+		}
 	}
 
 	public enum LineEditOrigin

@@ -174,6 +174,11 @@ public static class NodeExtensions
 
 public static class GodotTask
 {
+    extension<T>(Task<T> task)
+    {
+        public Task AsTask() => task;
+    }
+
     extension(Task task)
     {
         public static async Task GodotRun(Action action)
