@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis.Rename.ConflictEngine;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Tags;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.Threading;
 using ObservableCollections;
 using R3;
 using Roslyn.Utilities;
@@ -95,21 +96,19 @@ public partial class SharpIdeCodeEdit : CodeEdit
 		SetCodeRegionTags("#region", "#endregion");
 	}
 
-	private CancellationTokenSource _solutionAlteredCts = new();
+	private readonly CancellationSeries _solutionAlteredCancellationTokenSeries = new();
 	private async Task OnSolutionAltered()
 	{
 		using var _ = SharpIdeOtel.Source.StartActivity($"{nameof(SharpIdeCodeEdit)}.{nameof(OnSolutionAltered)}");
 		if (_currentFile is null) return;
 		if (_fileDeleted) return;
 		GD.Print($"[{_currentFile.Name}] Solution altered, updating project diagnostics for file");
-		await _solutionAlteredCts.CancelAsync();
-		_solutionAlteredCts = new CancellationTokenSource();
-		var ct = _solutionAlteredCts.Token;
-		var documentSyntaxHighlighting = _roslynAnalysis.GetDocumentSyntaxHighlighting(_currentFile, ct);
-		var razorSyntaxHighlighting = _roslynAnalysis.GetRazorDocumentSyntaxHighlighting(_currentFile, ct);
+		var newCt = _solutionAlteredCancellationTokenSeries.CreateNext();
+		var documentSyntaxHighlighting = _roslynAnalysis.GetDocumentSyntaxHighlighting(_currentFile, newCt);
+		var razorSyntaxHighlighting = _roslynAnalysis.GetRazorDocumentSyntaxHighlighting(_currentFile, newCt);
 		await Task.WhenAll(documentSyntaxHighlighting, razorSyntaxHighlighting);
 		await this.InvokeAsync(async () => SetSyntaxHighlightingModel(await documentSyntaxHighlighting, await razorSyntaxHighlighting));
-		var documentDiagnostics = await _roslynAnalysis.GetDocumentDiagnostics(_currentFile, ct);
+		var documentDiagnostics = await _roslynAnalysis.GetDocumentDiagnostics(_currentFile, newCt);
 		await this.InvokeAsync(() => SetDiagnostics(documentDiagnostics));
 	}
 
