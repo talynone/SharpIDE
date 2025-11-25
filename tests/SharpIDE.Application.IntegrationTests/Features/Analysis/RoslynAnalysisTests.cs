@@ -7,7 +7,7 @@ using SharpIDE.Application.Features.SolutionDiscovery.VsPersistence;
 
 [assembly: CaptureConsole]
 
-namespace SharpIDE.Application.UnitTests.Features.Analysis;
+namespace SharpIDE.Application.IntegrationTests.Features.Analysis;
 public class RoslynAnalysisTests
 {
 	private readonly ITestOutputHelper _testOutputHelper;

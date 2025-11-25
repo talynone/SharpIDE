@@ -48,7 +48,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\create-release.yml = .github\workflows\create-release.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpIDE.Application.UnitTests", "tests\SharpIDE.Application.UnitTests\SharpIDE.Application.UnitTests.csproj", "{17313240-0A0E-421E-8D33-FC7AD8669451}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpIDE.Application.IntegrationTests", "tests\SharpIDE.Application.IntegrationTests\SharpIDE.Application.IntegrationTests.csproj", "{17313240-0A0E-421E-8D33-FC7AD8669451}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
