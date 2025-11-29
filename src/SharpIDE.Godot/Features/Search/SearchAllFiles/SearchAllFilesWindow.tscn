@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://b8kytk23cfo4x"]
 
 [ext_resource type="Script" uid="uid://dbbjoiur46dhq" path="res://Features/Search/SearchAllFiles/SearchAllFilesWindow.cs" id="1_opko0"]
-[ext_resource type="PackedScene" uid="uid://d358tex0duum8" path="res://Features/Search/SearchInFiles/SearchResultComponent.tscn" id="2_ss4mx"]
+[ext_resource type="PackedScene" uid="uid://cactda5eiy55" path="res://Features/Search/SearchAllFiles/SearchAllFilesResultComponent.tscn" id="2_opko0"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cuaw5"]
 bg_color = Color(0.1764706, 0.1764706, 0.1764706, 1)
@@ -67,5 +67,5 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SearchAllFilesResultComponent" parent="MarginContainer/VBoxContainer/ScrollContainer/SearchResultsVBoxContainer" instance=ExtResource("2_ss4mx")]
+[node name="SearchAllFilesResultComponent" parent="MarginContainer/VBoxContainer/ScrollContainer/SearchResultsVBoxContainer" instance=ExtResource("2_opko0")]
 layout_mode = 2
