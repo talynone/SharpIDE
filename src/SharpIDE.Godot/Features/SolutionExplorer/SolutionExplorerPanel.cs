@@ -299,7 +299,9 @@ public partial class SolutionExplorerPanel : MarginContainer
 		}
 		var fileItem = tree.CreateItem(parent, newStartingIndex);
 		fileItem.SetText(0, sharpIdeFile.Name);
-		fileItem.SetIcon(0, GetIconForFileExtension(sharpIdeFile.Extension));
+		var (icon, overlayIcon) = GetIconForFileExtension(sharpIdeFile.Extension);
+		fileItem.SetIcon(0, icon);
+		if (overlayIcon is not null) fileItem.SetIconOverlay(0, overlayIcon);
 		fileItem.SetCustomColor(0, GetColorForGitStatus(sharpIdeFile.GitStatus));
 		fileItem.SetMetadata(0, new RefCountedContainer<SharpIdeFile>(sharpIdeFile));
 		

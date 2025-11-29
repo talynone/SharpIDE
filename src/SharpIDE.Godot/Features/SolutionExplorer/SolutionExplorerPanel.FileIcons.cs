@@ -12,8 +12,11 @@ public partial class SolutionExplorerPanel
     private readonly Texture2D _htmlIcon = ResourceLoader.Load<Texture2D>("uid://q0cktiwdkt1e");
     private readonly Texture2D _cssIcon = ResourceLoader.Load<Texture2D>("uid://b6m4rm5u8hd1c");
     private readonly Texture2D _txtIcon = ResourceLoader.Load<Texture2D>("uid://b6bpjhs2o1j2l");
+    private readonly Texture2D _genericFileIcon = ResourceLoader.Load<Texture2D>("uid://bile1h6sq0l08");
+    
+    private readonly Texture2D _propsFileOverlayIcon = ResourceLoader.Load<Texture2D>("uid://fa7tdmldi206");
 
-    private Texture2D GetIconForFileExtension(string fileExtension)
+    private (Texture2D Icon, Texture2D? OverlayIcon) GetIconForFileExtension(string fileExtension)
     {
         var texture = fileExtension switch
         {
@@ -24,8 +27,15 @@ public partial class SolutionExplorerPanel
             ".html" or ".htm" => _htmlIcon,
             ".css" => _cssIcon,
             ".txt" => _txtIcon,
+            ".props" => _genericFileIcon,
             _ => _csIcon
-        };    
-        return texture;
+        };
+        var overlayTexture = fileExtension switch
+        {
+            ".props" => _propsFileOverlayIcon,
+            _ => null
+        };
+        
+        return (texture, overlayTexture);
     }
 }
