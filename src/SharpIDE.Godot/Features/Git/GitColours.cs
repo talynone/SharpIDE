@@ -25,11 +25,11 @@ public static class GitColours
         _ => GitUnalteredFileColour
     };
     
-    public static Color GetColorForGitLineStatus(GitFileStatus fileStatus) => fileStatus switch
+    public static Color GetColorForGitLineStatus(GitLineStatus lineStatus) => lineStatus switch
     {
-        GitFileStatus.Added => GitNewFileTransparentColour,
-        GitFileStatus.Modified => GitEditedFileTransparentColour,
-        GitFileStatus.Unaltered => GitUnalteredFileTransparentColour,
+        GitLineStatus.Added => GitNewFileTransparentColour,
+        GitLineStatus.Modified => GitEditedFileTransparentColour,
+        GitLineStatus.Unaltered => GitUnalteredFileTransparentColour,
         _ => GitUnalteredFileTransparentColour
     };
 }

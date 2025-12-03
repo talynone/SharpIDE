@@ -46,3 +46,11 @@ public enum GitFileStatus
 	Modified,
 	Added
 }
+
+public enum GitLineStatus
+{
+	Unaltered,
+	Modified,
+	Added,
+	Removed
+}
