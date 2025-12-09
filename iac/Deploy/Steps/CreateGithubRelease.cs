@@ -36,13 +36,8 @@ public class CreateGithubRelease(IPipelineContext pipelineContext) : IStep
 			Prerelease = false,
 			GenerateReleaseNotes = true
 		};
-
-		//var owner = "MattParkerDev";
-		//var repo = "SharpIDE";
-
-		var owner = "talynone";
+		var owner = "MattParkerDev";
 		var repo = "SharpIDE";
-
 		var release = await github.Repository.Release.Create(owner, repo, newRelease);
 
 		var windowsReleaseZip = await PipelineFileHelper.GitRootDirectory.GetFile("./artifacts/publish-godot/sharpide-win-x64.zip");
